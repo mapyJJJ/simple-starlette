@@ -1,0 +1,16 @@
+stages:
+  - lint
+
+step1:
+  stage: lint
+  image:
+      name: $DOCKER_HOST/pyright-lint/pyright@sha256:f55079588443d9f604af558a6368b3789c276e029ba91efbcd8ca757d054960b
+  script:
+    - pyright --version
+    - pyright . 
+  tags:
+    - runner
+  only:
+    - master
+    - dev
+    - /^v-.*/

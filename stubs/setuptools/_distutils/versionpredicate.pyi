@@ -1,0 +1,16 @@
+from typing import Any
+
+re_validPackage: Any
+re_paren: Any
+re_splitComparison: Any
+
+def splitUp(pred: Any): ...
+
+compmap: Any
+
+class VersionPredicate:
+    pred: Any = ...
+    def __init__(self, versionPredicateStr: Any) -> None: ...
+    def satisfied_by(self, version: Any): ...
+
+def split_provision(value: Any): ...

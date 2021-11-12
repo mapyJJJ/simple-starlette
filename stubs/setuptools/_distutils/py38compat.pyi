@@ -1,0 +1,3 @@
+from typing import Any
+
+def aix_platform(osname: Any, version: Any, release: Any): ...

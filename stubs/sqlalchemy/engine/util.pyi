@@ -1,0 +1,9 @@
+from .. import exc as exc, util as util
+from ..util import collections_abc as collections_abc, immutabledict as immutabledict
+from typing import Any
+
+def connection_memoize(key: Any): ...
+
+class TransactionalContext:
+    def __enter__(self): ...
+    def __exit__(self, type_: Any, value: Any, traceback: Any) -> None: ...

@@ -1,0 +1,3 @@
+from typing import Any
+
+def newer_pairwise_group(sources_groups: Any, targets: Any): ...
