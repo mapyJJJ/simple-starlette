@@ -1,10 +1,12 @@
-import typing
-import inspect
 import asyncio
-import pydantic
 import functools
+import inspect
+import typing
 
+import pydantic
 from starlette.requests import Request
+
+from .exceptions import RequestArgsNoMatch
 
 try:
     # python3.6 +
@@ -13,11 +15,12 @@ except:
     contextvars = None
 
 
-def find_func(cls: typing.Any, method: str):
-    func = getattr(cls(), method.lower(), None)
-    if not func:
+def find_func(obj: typing.Any, method: str):
+    if not obj:
         raise Exception(404)
-    return func
+    if not inspect.isfunction(obj):
+        obj = getattr(obj(), method.lower(), None)
+    return obj
 
 
 def is_coroutine(obj: typing.Any) -> bool:
@@ -60,14 +63,17 @@ async def dispatch_request(cls, request: Request, data: typing.Mapping):
         _arg_obj = getattr(cls, _arg_obj_name, None)
         if not _arg_obj:
             raise Exception("no define obj")
-        kwargs[_key] = _arg_obj(**data)
         if not issubclass(_arg_obj, pydantic.BaseModel):
             raise Exception("_arg_obj must be pydantic.BaseModel")
+        try:
+            kwargs[_key] = _arg_obj.parse_obj(data)
+        except pydantic.ValidationError as e:
+            raise RequestArgsNoMatch(msg=e.errors(), status_code=4041)
 
     if is_coroutine_func:
         # execute view func
         response = await func(request, **kwargs)
     else:
         # run view func on threadpool
-        response = await run_in_threadpool(func, request)
+        response = await run_in_threadpool(func, request, **kwargs)
     return response

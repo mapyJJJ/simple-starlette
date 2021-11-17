@@ -1,4 +1,4 @@
-from .exceptions import RequestArgsError
+from .exceptions import RequestArgsResolvedError
 import typing
 from enum import Enum
 
@@ -54,7 +54,7 @@ def request_response(func: typing.Callable) -> ASGIApp:
                 else:
                     data = await request.json()
             except Exception as e:
-                raise RequestArgsError(f"Request parameter error, could not be resolved, {str(e)}")
+                raise RequestArgsResolvedError(f"Request parameter error, could not be resolved, {str(e)}")
         # dispatch request
         response = await dispatch_request(func, request, data)
         await response(scope, receive, send)
