@@ -47,13 +47,40 @@ def get_args(request, args: GetArgs):
     return Response(f"get, {args.name}", ResTypeEnum.TEXT)
 
 
+from simple_starlette import g
+
+
+def set_to_global(i):
+    g.res = i
+
+
+def get_from_global():
+    return g.res
+
+
+async def get_from_global_2():
+    import asyncio
+
+    await asyncio.sleep(10)
+    return g.res
+
+
 # include
 api = Include(app, "/api")
 
 
 @api.route("/ping1")
 async def ping1(request):
-    return Response("pong1", ResTypeEnum.TEXT)
+    set_to_global(1)
+    get_from_global()
+    return Response(str(get_from_global()), ResTypeEnum.TEXT)
+
+
+@api.route("/ping2")
+async def ping1(request):
+    set_to_global(2)
+    res = await get_from_global_2()
+    return Response(str(res), ResTypeEnum.TEXT)
 
 
 app.run()

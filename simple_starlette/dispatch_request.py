@@ -87,7 +87,7 @@ async def dispatch_request(cls, request: Request, data: typing.Mapping):
 
     # Introduce dependent parameters to the view function
     # use pydantic check request args and body
-    kwargs = await introduce_dependant_args(cls, func, data)
+    kwargs = await introduce_dependant_args(cls, func, data) or {}
 
     if is_coroutine_func:
         # execute view func

@@ -7,6 +7,7 @@ class ConfigAttribute(object):
         self.get_converter = get_converter
 
     def __get__(self, obj, type=None):
+        print(obj)
         config = getattr(obj, "_config")
         rv = config[self.attr_name]
         if not self.get_converter:
