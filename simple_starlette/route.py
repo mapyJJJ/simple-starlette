@@ -24,23 +24,6 @@ allow_methods = ["get", "post"]
 routes = []
 
 
-class Include:
-    """like flask blueprint"""
-
-    def __init__(self, route_prefix: str) -> None:
-        self.route_prefix = route_prefix
-
-    def register_route(self, route: str):
-        def register(cls: typing.Callable):
-            methods = []
-            for _m in allow_methods:
-                if getattr(cls, _m, None):
-                    methods.append(_m.upper())
-            routes.append(Route(self.route_prefix + route, cls, methods=methods))
-
-        return register
-
-
 def request_response(func: typing.Callable) -> ASGIApp:
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
         request = Request(scope, receive=receive, send=send)

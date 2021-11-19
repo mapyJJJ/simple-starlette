@@ -4,10 +4,13 @@
 import asyncio
 import functools
 import inspect
+from inspect import isfunction
 import typing
+from typing import Callable
 
 import pydantic
 from starlette.requests import Request
+from simple_starlette.args import register_args_models
 
 from .exceptions import RequestArgsNoMatch
 
@@ -19,6 +22,7 @@ except:
 
 
 def find_func(obj: typing.Any, method: str):
+    # 兼容fbv, cbv
     if not obj:
         raise Exception(404)
     if not inspect.isfunction(obj):
@@ -47,6 +51,30 @@ async def run_in_threadpool(func: typing.Callable, *args, **kwargs):
     return await loop.run_in_executor(None, func, *args)
 
 
+async def introduce_dependant_args(cls, func: Callable, data: typing.Mapping):
+    kwargs = {}
+    for k, t in func.__annotations__.items():
+        _args_model_name = t.__name__
+        print(k, _args_model_name)
+        if _args_model_name in ("Request"):
+            continue
+
+        _args_model_obj = None
+        if not isfunction(cls):
+            _args_model_obj = getattr(cls, _args_model_name, None)
+        else:
+            _args_model_obj = register_args_models.get(_args_model_name, None)
+
+        if _args_model_obj is None:
+            raise Exception("no define arg obj")
+
+        try:
+            kwargs[k] = _args_model_obj.parse_obj(data)
+        except pydantic.ValidationError as e:
+            raise RequestArgsNoMatch(err_msg=e.errors(), status_code=4041)
+        return kwargs
+
+
 async def dispatch_request(cls, request: Request, data: typing.Mapping):
     # dispatch request
     # register all views obj in routes
@@ -58,20 +86,7 @@ async def dispatch_request(cls, request: Request, data: typing.Mapping):
 
     # Introduce dependent parameters to the view function
     # use pydantic check request args and body
-    kwargs = {}
-    for _key, _type in func.__annotations__.items():
-        _arg_obj_name = _type.__name__
-        if _arg_obj_name in ("Request"):
-            continue
-        _arg_obj = getattr(cls, _arg_obj_name, None)
-        if not _arg_obj:
-            raise Exception("no define obj")
-        if not issubclass(_arg_obj, pydantic.BaseModel):
-            raise Exception("_arg_obj must be pydantic.BaseModel")
-        try:
-            kwargs[_key] = _arg_obj.parse_obj(data)
-        except pydantic.ValidationError as e:
-            raise RequestArgsNoMatch(err_msg=e.errors(), status_code=4041)
+    kwargs = await introduce_dependant_args(cls, func, data)
 
     if is_coroutine_func:
         # execute view func
