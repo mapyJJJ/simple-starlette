@@ -1,4 +1,3 @@
-from .exceptions import RequestArgsResolvedError
 import typing
 from enum import Enum
 
@@ -10,6 +9,7 @@ from starlette.routing import compile_path, get_name
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from .dispatch_request import dispatch_request
+from .exceptions import RequestArgsResolvedError
 
 try:
     import contextvars

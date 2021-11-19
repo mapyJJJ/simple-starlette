@@ -1,7 +1,7 @@
-from simple_starlette.args import BaseModel, register_args
-from simple_starlette import Include
 import pydantic
-from simple_starlette import SimpleStarlette, ResTypeEnum, Response
+
+from simple_starlette import Include, Response, ResTypeEnum, SimpleStarlette
+from simple_starlette.args import BaseModel, register_args
 
 app = SimpleStarlette("__name__")
 

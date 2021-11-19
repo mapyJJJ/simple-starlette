@@ -20,7 +20,7 @@ class BaseModel(pydantic.BaseModel):
 
 def register_args(cls: T) -> T:
     cls_name = getattr(cls, "__name__")
-    if not issubclass(cls, BaseModel): # type: ignore
+    if not issubclass(cls, BaseModel):  # type: ignore
         raise BaseArgsError(
             "registed obj must be a simple_starlette.args.BaseModel subclass, {}".format(
                 cls_name

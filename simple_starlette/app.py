@@ -1,10 +1,12 @@
 import typing
-import uvicorn
 from typing import Any, List
-from .route import Route
-from .exceptions import exception_handlers
+
+import uvicorn
 from starlette.applications import Starlette
 from starlette.types import Receive, Scope, Send
+
+from .exceptions import exception_handlers
+from .route import Route
 
 
 class SimpleStarlette:

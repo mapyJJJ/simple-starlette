@@ -2,6 +2,7 @@
 # ~~~~~~~~~~~~~~
 
 import typing
+
 from simple_starlette.app import SimpleStarlette
 
 

@@ -1,16 +1,12 @@
 # responses
 # ~~~~~~~~~
 
-from typing import Any
-from enum import Enum
-from starlette.responses import (
-    JSONResponse,
-    PlainTextResponse,
-    FileResponse,
-    HTMLResponse,
-    RedirectResponse,
-)
 from collections import namedtuple
+from enum import Enum
+from typing import Any
+
+from starlette.responses import (FileResponse, HTMLResponse, JSONResponse,
+                                 PlainTextResponse, RedirectResponse)
 
 ResponseType = namedtuple("responses_type", ["response_type", "response_class"])
 
