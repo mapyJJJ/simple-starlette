@@ -1,4 +1,5 @@
 import pydantic
+from starlette.requests import Request
 
 from simple_starlette import Include, Response, ResTypeEnum, SimpleStarlette
 from simple_starlette.args import BaseModel, register_args
@@ -82,5 +83,21 @@ async def ping1(request):
     res = await get_from_global_2()
     return Response(str(res), ResTypeEnum.TEXT)
 
+
+from starlette.requests import Request
+from simple_starlette import SimpleStarlette, Response, ResTypeEnum
+
+app = SimpleStarlette(__name__)
+
+
+from simple_starlette import BaseModel, register_args
+
+@register_args
+class GetArgs(BaseModel):
+    name: str
+
+@app.route("/test")
+async def test(self, request: Request, params1: GetArgs):
+    return Response(params1.name, ResTypeEnum.TEXT)
 
 app.run()
