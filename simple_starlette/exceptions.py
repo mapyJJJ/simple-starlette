@@ -1,39 +1,54 @@
-from simple_starlette.responses import ResTypeEnum, Response
-from typing import Any, Dict, TypeVar
+# exceptions
+# ~~~~~~~~~~~~~~~~~~~~~
 import typing
+from abc import ABCMeta, abstractstaticmethod
+from typing import Any, Callable, TypeVar
+
 from starlette.requests import Request
 
+from simple_starlette.responses import Response, ResTypeEnum
 
-class BaseException(Exception):
-    def __init__(self, msg: Any = "", status_code: int = 400) -> None:
-        self.msg = msg
+
+class BaseException(Exception, metaclass=ABCMeta):
+    def __init__(self, err_msg: Any = "", status_code: int = 400) -> None:
+        self.err_msg = err_msg
         self.status_code = status_code
 
-    async def _handle(self, request: Request):
-        return Response(
-            {"err_msg": self.msg, "err_code": self.status_code}, ResTypeEnum.JSON
-        )
+    @abstractstaticmethod
+    async def exception_handle(request: Request, err: BaseException):
+        Ellipsis
+
+
+async def common_exception_handle(request: Request, err: BaseException):
+    return Response(
+        {"err_msg": err.err_msg, "err_code": err.status_code}, ResTypeEnum.JSON
+    )
 
 
 class RequestArgsResolvedError(BaseException):
-    Ellipsis
+    @staticmethod
+    async def exception_handle(request: Request, err: BaseException):
+        return await common_exception_handle(request, err)
 
 
 class RequestArgsNoMatch(BaseException):
-    Ellipsis
+    @staticmethod
+    async def exception_handle(request: Request, err: BaseException):
+        return await common_exception_handle(request, err)
 
-
-T = TypeVar("T")
 
 exception_handlers = typing.cast(
     typing.Dict[typing.Union[int, typing.Type[Exception]], typing.Callable],
     {
-        RequestArgsNoMatch: RequestArgsNoMatch._handle,
-        RequestArgsResolvedError: RequestArgsResolvedError._handle,
+        RequestArgsNoMatch: RequestArgsNoMatch.exception_handle,
+        RequestArgsResolvedError: RequestArgsResolvedError.exception_handle,
     },
 )
 
 
-def register_exception(self, cls: T, handle_name: str) -> T:
-    exception_handlers.update({cls: getattr(cls, handle_name, "not found handle")})
+T = TypeVar("T")
+
+
+def register_exception(cls: T, exception_handle: Callable) -> T:
+    exception_handlers.update({cls: exception_handle})
     return cls

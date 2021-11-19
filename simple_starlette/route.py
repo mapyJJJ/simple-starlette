@@ -25,8 +25,8 @@ routes = []
 
 
 class Include:
-    """like flask blueprint
-    """
+    """like flask blueprint"""
+
     def __init__(self, route_prefix: str) -> None:
         self.route_prefix = route_prefix
 
@@ -54,7 +54,10 @@ def request_response(func: typing.Callable) -> ASGIApp:
                 else:
                     data = await request.json()
             except Exception as e:
-                raise RequestArgsResolvedError(f"Request parameter error, could not be resolved, {str(e)}")
+                raise RequestArgsResolvedError(
+                    err_msg="Request parameter error, could not be resolved, {str(e)}",
+                    status_code=4041,
+                )
         # dispatch request
         response = await dispatch_request(func, request, data)
         await response(scope, receive, send)
@@ -72,8 +75,7 @@ class Route(_Route):
         name: str = None,
         include_in_schema: bool = True,
     ) -> None:
-        """
-        """
+        """ """
 
         assert path.startswith("/"), "Routed paths must start with '/'"
 

@@ -1,3 +1,6 @@
+# dispatch request
+# ~~~~~~~~~~~~~~~~
+
 import asyncio
 import functools
 import inspect
@@ -68,7 +71,7 @@ async def dispatch_request(cls, request: Request, data: typing.Mapping):
         try:
             kwargs[_key] = _arg_obj.parse_obj(data)
         except pydantic.ValidationError as e:
-            raise RequestArgsNoMatch(msg=e.errors(), status_code=4041)
+            raise RequestArgsNoMatch(err_msg=e.errors(), status_code=4041)
 
     if is_coroutine_func:
         # execute view func
