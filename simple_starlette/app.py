@@ -1,6 +1,6 @@
 import typing
 import uvicorn
-from typing import Any
+from typing import Any, List
 from .route import Route
 from .exceptions import exception_handlers
 from starlette.applications import Starlette
@@ -28,6 +28,11 @@ class SimpleStarlette:
             self.routes.append(Route(path, cls, methods=methods, **options))
 
         return register
+
+    def register_route(self, path, cls: typing.Callable, methods: List[str], **options):
+        print(path)
+        self.routes.append(Route(path, cls, methods=methods, **options))
+        return
 
     def run(self, host: str = None, port: int = None, debug: bool = True, **options):
         # run mode
