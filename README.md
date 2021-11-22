@@ -1,5 +1,9 @@
 # Simple-Starlette
 
+### install
+
+`pip install simple-starlette`
+
 ### simple example
 ```python
 from starlette.requests import Request
