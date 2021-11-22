@@ -55,7 +55,7 @@ class SimpleStarlette:
                     raise Exception(
                         "endpoint is function , params: allow_methods is require !"
                     )
-                self.route.append(Route(path, cls, methods=allow_methods, **options))
+                self.routes.append(Route(path, cls, methods=allow_methods, **options))
             else:
                 if allow_methods:
                     warnings.warn("endpoint is class, params: allow_methods is useless")
