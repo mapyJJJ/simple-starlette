@@ -1,11 +1,16 @@
+import inspect
 import typing
 
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
-from starlette.routing import Route as _Route
+from starlette.routing import (
+    Route as _Route,
+    WebSocketRoute as _WebSocketRoute, websocket_session
+)
 from starlette.routing import compile_path, get_name
 from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.websockets import WebSocket
 
 from .dispatch_request import dispatch_request
 from .exceptions import RequestArgsResolvedError
@@ -37,7 +42,9 @@ def request_response(func: typing.Callable) -> ASGIApp:
                     data = await request.json()
             except Exception as e:
                 raise RequestArgsResolvedError(
-                    err_msg="Request parameter error, could not be resolved, {str(e)}",
+                    err_msg="Request parameter error, could not be resolved, {}".format(
+                        str(e)
+                    ),
                     status_code=4041,
                 )
         # dispatch request
@@ -84,3 +91,28 @@ class Route(_Route):
             await response(scope, receive, send)
         else:
             await self.app(scope, receive, send)
+
+
+class WebSocketRoute(_WebSocketRoute):
+    def __init__(
+        self, path: str, endpoint: typing.Callable, *, name: str = None
+    ) -> None:
+        assert path.startswith("/"), "Routed paths must start with '/'"
+        self.path = path
+        self.endpoint = endpoint
+        self.name = get_name(endpoint) if name is None else name
+
+        self.app = request_response(endpoint)
+
+        if inspect.isfunction(endpoint) or inspect.ismethod(endpoint):
+            # Endpoint is function or method. Treat it as `func(websocket)`.
+            self.app = websocket_session(endpoint)
+        else:
+            # Endpoint is a class. Treat it as ASGI.
+            if not hasattr(endpoint, "handle"):
+                raise Exception(
+                    "websocker endpoint is class, the `handle` func is require"
+                )
+            self.app = websocket_session(getattr(endpoint, "handle"))
+
+        self.path_regex, self.path_format, self.param_convertors = compile_path(path)

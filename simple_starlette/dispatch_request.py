@@ -26,9 +26,9 @@ def find_func(obj: typing.Any, method: str):
     # 兼容fbv, cbv
     if not obj:
         raise Exception(404)
-    if not inspect.isfunction(obj):
-        obj = getattr(obj(), method.lower(), None)
-    return obj
+    if inspect.isfunction(obj):
+        return obj
+    return getattr(obj(), method.lower(), None)
 
 
 def is_coroutine(obj: typing.Any) -> bool:

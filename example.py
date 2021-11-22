@@ -1,24 +1,57 @@
-from simple_starlette.exceptions import SimpleException
-from starlette.requests import Request
-from simple_starlette import (
-    SimpleStarlette,
-    register_exception,
-    common_exception_handle,
-)
-
-app = SimpleStarlette(__name__)
+import uvicorn
+from starlette.applications import Starlette
+from starlette.endpoints import WebSocketEndpoint, HTTPEndpoint
+from starlette.responses import HTMLResponse
+from starlette.routing import Route, WebSocketRoute
 
 
-@register_exception
-class TestError(SimpleException):
-    @staticmethod
-    async def exception_handle(request: Request, err: "SimpleException"):
-        return await common_exception_handle(request, err)
+html = """
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chat</title>
+    </head>
+    <body>
+        <h1>WebSocket Chat</h1>
+        <form action="" onsubmit="sendMessage(event)">
+            <input type="text" id="messageText" autocomplete="off"/>
+            <button>Send</button>
+        </form>
+        <ul id='messages'>
+        </ul>
+        <script>
+            var ws = new WebSocket("ws://localhost:8000/ws");
+            ws.onmessage = function(event) {
+                var messages = document.getElementById('messages')
+                var message = document.createElement('li')
+                var content = document.createTextNode(event.data)
+                message.appendChild(content)
+                messages.appendChild(message)
+            };
+            function sendMessage(event) {
+                var input = document.getElementById("messageText")
+                ws.send(input.value)
+                input.value = ''
+                event.preventDefault()
+            }
+        </script>
+    </body>
+</html>
+"""
 
+class Homepage(HTTPEndpoint):
+    async def get(self, request):
+        return HTMLResponse(html)
 
-@app.route("/test")
-async def test(request: Request):
-    raise TestError(err_msg="test error", status_code=4000)
+class Echo(WebSocketEndpoint):
+    encoding = "text"
 
+    async def on_receive(self, websocket, data):
+        await websocket.send_text(f"Message text was: {data}")
 
-app.run()
+routes = [
+    Route("/", Homepage),
+    WebSocketRoute("/ws", Echo)
+]
+
+app = Starlette(routes=routes)

@@ -21,17 +21,11 @@ class Include:
             raise IncludeError("prefix cannot format, {}".format(prefix))
         self.prefix = prefix
 
-    def route(self, path: str, **options):
+    def route(self, path: str, websoket_route: bool = False, **options):
         if not path.startswith("/"):
             path = "/" + path
 
         def register(cls: typing.Callable):
-            methods = []
-            for _m in self.app.allow_methods:
-                if getattr(cls, _m, None):
-                    methods.append(_m.upper())
-            self.app.register_route(
-                path=self.prefix + path, cls=cls, methods=methods, **options
-            )
+            self.app.route(path, websoket_route=websoket_route, **options)(cls)
 
         return register

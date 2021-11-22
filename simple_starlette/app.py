@@ -1,6 +1,9 @@
+import warnings
+import inspect
 import typing
 from typing import Any, Callable, List
 from starlette.requests import Request
+from .route import WebSocketRoute
 
 import uvicorn
 from starlette.applications import Starlette
@@ -34,19 +37,41 @@ class SimpleStarlette:
 
         self.simple_starlette_app = None
 
-    def route(self, path, **options):
+    def route(
+        self,
+        path,
+        allow_methods: List[str] = None,
+        websocket_route: bool = False,
+        **options
+    ):
         def register(cls: typing.Callable):
-            methods = []
-            for _m in self.allow_methods:
-                if getattr(cls, _m, None):
-                    methods.append(_m.upper())
-            self.routes.append(Route(path, cls, methods=methods, **options))
+            if websocket_route:
+                self.routes.append(WebSocketRoute(path, cls, **options))
+                return
+
+            # http route
+            if inspect.isfunction(cls):
+                if allow_methods is None:
+                    raise Exception(
+                        "endpoint is function , params: allow_methods is require !"
+                    )
+                self.route.append(Route(path, cls, methods=allow_methods, **options))
+            else:
+                if allow_methods:
+                    warnings.warn("endpoint is class, params: allow_methods is useless")
+                methods = []
+                for _m in self.allow_methods:
+                    if getattr(cls, _m, None):
+                        methods.append(_m.upper())
+                if not methods:
+                    raise Exception(
+                        "not found any http method func in endpoint, {}".format(
+                            cls.__class__.__name__
+                        )
+                    )
+                self.routes.append(Route(path, cls, methods=methods, **options))
 
         return register
-
-    def register_route(self, path, cls: typing.Callable, methods: List[str], **options):
-        self.routes.append(Route(path, cls, methods=methods, **options))
-        return
 
     def run(self, host: str = None, port: int = None, debug: bool = True, **options):
         # run mode
