@@ -8,7 +8,7 @@ from simple_starlette import SimpleStarlette, Response, ResTypeEnum
 app = SimpleStarlette(__name__)
 
 
-@app.route("/test")
+@app.route("/test", allow_methods=["get"])
 async def test(request: Request):
     return Response(request.url, ResTypeEnum.TEXT)
 
