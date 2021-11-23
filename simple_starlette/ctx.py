@@ -1,11 +1,14 @@
-from contextvars import ContextVar, copy_context
+# ctx.py
+# ~~~~~~~~~~~~~
 
+import contextvars
 from werkzeug.local import LocalProxy
 
-global_var = ContextVar("global_var")
-
+global_var = contextvars.ContextVar("global_var")
 
 class CtxStorage:
+    """ctx storage class"""
+
     def get(self, name: str, default=None):
         return self.__dict__.get(name, default)
 
@@ -18,7 +21,10 @@ class CtxStorage:
 
 
 def get_global_var():
-    if global_var not in copy_context():
+    """get current ctx var"""
+    if global_var in contextvars.copy_context():
+        return global_var.get()
+    else:
         global_var.set(CtxStorage())
     return global_var.get()
 

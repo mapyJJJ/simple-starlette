@@ -1,3 +1,9 @@
+# config.py
+# ~~~~~~~~~~~~
+
+import json
+import os
+import types
 from typing import Any
 
 
@@ -7,7 +13,6 @@ class ConfigAttribute(object):
         self.get_converter = get_converter
 
     def __get__(self, obj, type=None):
-        print(obj)
         config = getattr(obj, "_config")
         rv = config[self.attr_name]
         if not self.get_converter:
@@ -18,3 +23,55 @@ class ConfigAttribute(object):
         config = getattr(obj, "_config")
         config[self.attr_name] = value
         setattr(obj, "_config", config)
+
+
+class Config(dict):
+    """simple starlette config"""
+
+    def from_pyfile(self, pyfile_path: str):
+        if not os.path.exists(pyfile_path):
+            raise OSError("config pyfile {} on exists !".format(str(pyfile_path)))
+        d = types.ModuleType("config")
+        d.__file__ = pyfile_path
+        try:
+            with open(pyfile_path, "rb") as pyfile:
+                r = pyfile.read()
+                exec(compile(r, pyfile_path, "exec"), d.__dict__)
+        except IOError as e:
+            e.strerror = "Unable to load configuration file {}".format(e.strerror)
+            raise
+        self.from_obj(d)
+        return
+
+    def from_json(self, jsonfile_path: str):
+        if not os.path.exists(jsonfile_path):
+            raise OSError("config pyfile {} on exists !".format(str(jsonfile_path)))
+        try:
+            with open(jsonfile_path) as jsonfile:
+                d = json.loads(jsonfile.read())
+        except IOError as e:
+            e.strerror = "Unable to load configuration file {}".format(e.strerror)
+            raise
+        self.from_mappings(d)
+
+    def from_mappings(self, mappings):
+        d = []
+        if len(mappings) == 1:
+            if hasattr(mappings[0], "items"):
+                d.append(mappings[0].items())
+            else:
+                d.append(mappings[0])
+        elif len(mappings) > 1:
+            raise TypeError("exce")
+
+        for _m in mappings:
+            for (k, v) in _m:
+                if k.isupper():
+                    self[k] = v
+        return
+
+    def from_obj(self, obj):
+        for k in dir(obj):
+            if k.isupper():
+                self[k] = getattr(obj, k)
+        return

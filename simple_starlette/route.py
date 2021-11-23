@@ -1,3 +1,6 @@
+# route.py
+# ~~~~~~~~~~~~
+
 import inspect
 import typing
 
@@ -6,7 +9,8 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse
 from starlette.routing import (
     Route as _Route,
-    WebSocketRoute as _WebSocketRoute, websocket_session
+    WebSocketRoute as _WebSocketRoute,
+    websocket_session,
 )
 from starlette.routing import compile_path, get_name
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -16,16 +20,9 @@ from .dispatch_request import dispatch_request
 from .exceptions import RequestArgsResolvedError
 
 try:
-    import contextvars
+    import contextvars  # > python 3.6 +
 except ImportError:
     contextvars = None  # type: ignore
-
-
-# allow http method
-allow_methods = ["get", "post"]
-
-# all routes
-routes = []
 
 
 def request_response(func: typing.Callable) -> ASGIApp:

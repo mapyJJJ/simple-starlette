@@ -1,5 +1,6 @@
 # exceptions
-# ~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~
+
 import typing
 from abc import ABCMeta, abstractstaticmethod
 from typing import Any, Type, TypeVar

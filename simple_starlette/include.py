@@ -10,15 +10,15 @@ class IncludeError(Exception):
     Ellipsis
 
 
-standard_split_flag = ["", "/"]
-
-
 class Include:
+    """register route by include"""
+
+    standard_split_flag = ["", "/"]
+
     def __init__(self, app: SimpleStarlette, prefix: str) -> None:
         self.app = app
-        (*split_flag, _) = prefix.partition("/")
-        if split_flag != standard_split_flag:
-            raise IncludeError("prefix cannot format, {}".format(prefix))
+        if not prefix.startswith("/"):
+            raise TypeError("prefix must startwith '/'")
         self.prefix = prefix
 
     def route(self, path: str, websoket_route: bool = False, **options):
