@@ -45,6 +45,7 @@ def request_response(func: typing.Callable) -> ASGIApp:
                     status_code=4041,
                 )
         # dispatch request
+        setattr(request, "data", data)
         response = await dispatch_request(func, request, data)
         await response(scope, receive, send)
 

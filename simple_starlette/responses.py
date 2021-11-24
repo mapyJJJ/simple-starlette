@@ -3,6 +3,7 @@
 
 from collections import namedtuple
 from enum import Enum
+import json
 from typing import Any
 
 from starlette.responses import (
@@ -27,7 +28,12 @@ class ResTypeEnum(Enum):
 class Response:
     def __init__(self, res: Any, res_type: ResTypeEnum, **options) -> Any:
         self.res = res
+        self.res_type = res_type
         self.res_class = res_type.value.response_class
 
     async def __call__(self, *args: Any, **kwds: Any) -> Any:
-        await self.res_class(content=self.res).__call__(*args, **kwds)
+        res = self.res
+        if self.res_type == ResTypeEnum.JSON:
+            if isinstance(self.res, str):
+                res = json.loads(res)
+        await self.res_class(content=res).__call__(*args, **kwds)
