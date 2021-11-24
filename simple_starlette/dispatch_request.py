@@ -56,7 +56,6 @@ async def introduce_dependant_args(cls, func: Callable, data: typing.Mapping):
     kwargs = {}
     for k, t in func.__annotations__.items():
         _args_model_name = t.__name__
-        print(k, _args_model_name)
         if _args_model_name in ("Request"):
             continue
 

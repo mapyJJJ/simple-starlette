@@ -6,6 +6,8 @@ requires = [
     "werkzeug >= 2.0.2",
     "uvicorn[standard] == 0.15.0",
     "python_version >= '3.8.0'",
+    "SQLAlchemy >= 1.4.27",
+    "aiomysql >= 0.0.21",
 ]
 
 
