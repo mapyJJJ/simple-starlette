@@ -54,8 +54,10 @@ class JsonRpcClient:
         self.method = method
         self.method_name = method_name
 
-    def get_response(self) -> Union[Ok, Error]:
+    def get_response(self, params: dict) -> Ok:
         response = operator.methodcaller(
-            self.method.lower(), json=request(self.method_name)
+            self.method.lower(),
+            json=request(self.method_name, params=params),
+            url=self.host,
         )(requests)
         return parse(response.json())
