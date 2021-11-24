@@ -173,3 +173,75 @@ app.run()
 ```
 
 ---
+
+### db(orm:sqlalchemy)
+```python
+import asyncio
+
+from sqlalchemy import Column, Integer, String, select
+from sqlalchemy.sql.elements import Label
+from sqlalchemy.sql.functions import count
+from starlette.requests import Request
+
+from simple_starlette import (BaseModel, DbBaseModel, SimpleStarlette,
+                              Sqlalchemy, register_args)
+from simple_starlette.responses import Response, ResTypeEnum
+
+app = SimpleStarlette(__name__)
+app.config[
+    "SQLALCHEMY_DATABASE_URI"
+] = "mysql+aiomysql://root:password@localhost/database_name?charset=utf8mb4"
+
+db = Sqlalchemy(app)
+
+
+class Person(DbBaseModel["Person"]):
+    id = Column(Integer, primary_key=True)
+    email = Column(String(64))
+
+
+@register_args
+class P(BaseModel):
+    email: str
+
+
+# test query table
+@app.route("/test_db", allow_methods=["get"])
+async def test_db(request: Request):
+    async def query_one_person():
+        r = await db.Session.execute(select(Person).order_by(Person.id.desc()))
+        fisrt_p = r.scalars().first()
+        return fisrt_p
+
+    async def query_person_count():
+        r = await db.Session.execute(select(Label("count", count(Person.id))))
+        return r.one()
+
+    async def query():
+        L = await asyncio.gather(query_one_person(), query_person_count())
+        return L
+
+    L = await query()
+    return Response(
+        {"id": L[0].id, "email": L[0].email, "c": L[1].count}, ResTypeEnum.JSON
+    )
+
+
+# test add data
+@app.route("/test_db/add", allow_methods=["get"])
+async def test_db_add(request: Request, person_args: P):
+    async def add_one_person():
+        new_person = Person.create(email=person_args.email)
+        s = db.get_async_session()
+        s.add(new_person)
+        await db.Session.commit()
+        return new_person
+
+    p = await add_one_person()
+    return Response({"id": p.id, "email": p.email}, ResTypeEnum.JSON)
+
+
+if __name__ == "__main__":
+    app.run(port=5001)
+
+```
