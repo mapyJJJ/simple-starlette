@@ -3,7 +3,7 @@
 # ~~~~~~~~~~~~~
 
 import asyncio
-from typing import TYPE_CHECKING, Any, Generic, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
 from sqlalchemy.ext.asyncio.session import AsyncSession as _AsyncSession

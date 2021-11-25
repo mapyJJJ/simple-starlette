@@ -27,8 +27,6 @@ class Include:
     ```
     """
 
-    standard_split_flag = ["", "/"]
-
     def __init__(self, app: SimpleStarlette, prefix: str) -> None:
         self.app = app
         if not prefix.startswith("/"):

@@ -55,19 +55,9 @@ class Config(dict):
         self.from_mappings(d)
 
     def from_mappings(self, mappings):
-        d = []
-        if len(mappings) == 1:
-            if hasattr(mappings[0], "items"):
-                d.append(mappings[0].items())
-            else:
-                d.append(mappings[0])
-        elif len(mappings) > 1:
-            raise TypeError("exce")
-
-        for _m in mappings:
-            for (k, v) in _m:
-                if k.isupper():
-                    self[k] = v
+        for _k, _v in mappings.items():
+            if _k.isupper():
+                self[_k] = _v
         return
 
     def from_obj(self, obj):

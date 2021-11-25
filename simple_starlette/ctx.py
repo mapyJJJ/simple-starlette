@@ -24,6 +24,7 @@ class CtxStorage:
 
 def get_global_var():
     """get current ctx var"""
+
     if global_var in contextvars.copy_context():
         return global_var.get()
     else:

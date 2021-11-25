@@ -4,7 +4,7 @@
 import inspect
 import typing
 import warnings
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import uvicorn
 from starlette.applications import Starlette
@@ -176,7 +176,7 @@ class SimpleStarlette:
         setattr(self, "starlette_app", starlette_app)
         return starlette_app
 
-    def make_config(self) -> dict:
+    def make_config(self):
         """return config object"""
         default_config = {"DEBUG": False, "ENV": None}
         return self.config_class(default_config)

@@ -183,9 +183,15 @@ from sqlalchemy.sql.elements import Label
 from sqlalchemy.sql.functions import count
 from starlette.requests import Request
 
-from simple_starlette import (BaseModel, DbBaseModel, SimpleStarlette,
-                              Sqlalchemy, register_args)
-from simple_starlette.responses import Response, ResTypeEnum
+
+from simple_starlette.db.db_sqlalchemy import DbBaseModel, Sqlalchemy
+from simple_starlette import (
+    Response,
+    ResTypeEnum,
+    SimpleStarlette,
+    register_args,
+    BaseModel,
+)
 
 app = SimpleStarlette(__name__)
 app.config[
@@ -243,7 +249,6 @@ async def test_db_add(request: Request, person_args: P):
 
 if __name__ == "__main__":
     app.run(port=5001)
-
 ```
 
 ---
