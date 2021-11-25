@@ -272,7 +272,7 @@ if __name__ == "__main__":
 from simple_starlette.rpc.json_rpc import JsonRpcClient
 
 PingServer = JsonRpcClient(host='http://localhost:5001/', method="post", method_name='ping')
-r = PingServer.get_response({"name": "jack"})
+r = PingServer.get_response(params={"name": "jack"})
 
 print(r.result)  # pong jack
 ```
