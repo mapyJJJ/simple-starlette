@@ -1,9 +1,9 @@
 # responses
 # ~~~~~~~~~~~~
 
+import json
 from collections import namedtuple
 from enum import Enum
-import json
 from typing import Any
 
 from starlette.responses import (

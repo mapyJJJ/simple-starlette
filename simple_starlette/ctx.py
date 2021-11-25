@@ -2,9 +2,11 @@
 # ~~~~~~~~~~~~~
 
 import contextvars
+
 from werkzeug.local import LocalProxy
 
 global_var = contextvars.ContextVar("global_var")
+
 
 class CtxStorage:
     """ctx storage class"""

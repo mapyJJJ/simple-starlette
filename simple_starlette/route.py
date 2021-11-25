@@ -7,14 +7,10 @@ import typing
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
-from starlette.routing import (
-    Route as _Route,
-    WebSocketRoute as _WebSocketRoute,
-    websocket_session,
-)
-from starlette.routing import compile_path, get_name
+from starlette.routing import Route as _Route
+from starlette.routing import WebSocketRoute as _WebSocketRoute
+from starlette.routing import compile_path, get_name, websocket_session
 from starlette.types import ASGIApp, Receive, Scope, Send
-from starlette.websockets import WebSocket
 
 from .dispatch_request import dispatch_request
 from .exceptions import RequestArgsResolvedError

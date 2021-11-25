@@ -1,18 +1,18 @@
-from simple_starlette.config import Config
-import warnings
 import inspect
 import typing
+import warnings
 from typing import Callable, List, Union
-from starlette.requests import Request
-from .route import WebSocketRoute
 
 import uvicorn
 from starlette.applications import Starlette
-from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.middleware import Middleware
+from starlette.requests import Request
+from starlette.types import Receive, Scope, Send
+
+from simple_starlette.config import Config
 
 from .exceptions import exception_handlers
-from .route import Route
+from .route import Route, WebSocketRoute
 
 
 class SimpleStarlette:

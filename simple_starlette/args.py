@@ -2,6 +2,7 @@
 # ~~~~~~~~
 
 import pydantic
+
 from simple_starlette.types import ArgsT
 
 register_args_models = {}

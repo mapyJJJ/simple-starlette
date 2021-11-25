@@ -1,15 +1,16 @@
 import json
 import operator
-from typing import Literal, Union
-from jsonrpcserver.result import Success
+from typing import Literal
 
 import requests
-from jsonrpcclient.responses import Ok, Error
 from jsonrpcclient import parse, request  # type: ignore
+from jsonrpcclient.responses import Ok
 from jsonrpcserver import dispatch, method
+from jsonrpcserver.result import Success
+from starlette.requests import Request
+
 from simple_starlette.app import SimpleStarlette
 from simple_starlette.responses import Response, ResTypeEnum
-from starlette.requests import Request
 
 
 class JsonRpcServer:
@@ -54,7 +55,7 @@ class JsonRpcClient:
         self.method = method
         self.method_name = method_name
 
-    def get_response(self, params: dict) -> Ok:
+    async def get_response(self, params: dict) -> Ok:
         response = operator.methodcaller(
             self.method.lower(),
             json=request(self.method_name, params=params),
