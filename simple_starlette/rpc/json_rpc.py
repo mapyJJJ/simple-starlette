@@ -1,3 +1,6 @@
+# json-rpc server, client
+# ~~~~~~~~~~~~~~~~~~~~~~~~
+
 import json
 import operator
 from typing import Literal
@@ -38,7 +41,7 @@ class JsonRpcServer:
 
     def run(self, host: str = None, port: int = None, debug: bool = True, **options):
         for _p in self.paths:
-            if _p in self.app.get_routes_by_namespace(_p):
+            if _p in self.app.get_paths_by_namespace(_p):
                 continue
             self.gen_route(_p)
         self.app.run(host=host, port=port, debug=debug, **options)

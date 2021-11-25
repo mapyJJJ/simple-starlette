@@ -22,8 +22,7 @@ except:
     contextvars = None
 
 
-def find_func(obj: typing.Any, method: str):
-    # 兼容fbv, cbv
+def find_view_func(obj: typing.Any, method: str):
     if not obj:
         raise Exception(404)
     if inspect.isfunction(obj):
@@ -37,27 +36,27 @@ def is_coroutine(obj: typing.Any) -> bool:
     return inspect.iscoroutinefunction(obj)
 
 
-async def run_in_threadpool(func: typing.Callable, *args, **kwargs):
-    # create event loop
+async def run_in_eventloop(func: typing.Callable, *args, **kwargs):
+    """
+    first create event loop
+    if has context, run in context
+    """
     loop = asyncio.get_event_loop()
     if contextvars:
         child_func = functools.partial(func, *args, **kwargs)
         context = contextvars.copy_context()
-        # execute on lifespan
         func = context.run
         args = (child_func,)
     elif kwargs:
         func = functools.partial(func, **kwargs)
-    # use default executor
     return await loop.run_in_executor(None, func, *args)
 
 
 async def introduce_dependant_args(cls, func: Callable, data: typing.Mapping):
+    """introduce depends"""
     kwargs = {}
-    for k, t in func.__annotations__.items():
+    for k, t in func.__annotations__.items()[1:]:
         _args_model_name = t.__name__
-        if _args_model_name in ("Request"):
-            continue
 
         _args_model_obj = None
         if not isfunction(cls):
@@ -76,22 +75,24 @@ async def introduce_dependant_args(cls, func: Callable, data: typing.Mapping):
 
 
 async def dispatch_request(cls, request: Request, data: typing.Mapping):
-    # dispatch request
-    # register all views obj in routes
-    # find target func and return response
-    func = find_func(cls, request.method)
+    """dispatch request
+    register all views obj in routes
+    find target func and return response
+    """
+    view_func = find_view_func(cls, request.method)
 
     # check func iscoroutine
-    is_coroutine_func = is_coroutine(func)
+    is_coroutine_func = is_coroutine(view_func)
 
     # Introduce dependent parameters to the view function
     # use pydantic check request args and body
-    kwargs = await introduce_dependant_args(cls, func, data) or {}
+    kwargs = await introduce_dependant_args(cls, view_func, data) or {}
 
     if is_coroutine_func:
         # execute view func
-        response = await func(request, **kwargs)
+        response = await view_func(request, **kwargs)
     else:
         # run view func on threadpool
-        response = await run_in_threadpool(func, request, **kwargs)
+        # normal function , run in eventloop
+        response = await run_in_eventloop(view_func, request, **kwargs)
     return response

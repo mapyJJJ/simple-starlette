@@ -6,12 +6,26 @@ import typing
 from simple_starlette.app import SimpleStarlette
 
 
-class IncludeError(Exception):
-    Ellipsis
-
-
 class Include:
-    """register route by include"""
+    """register route by include
+
+    like flask blueprint
+
+    Usage:
+
+    ```
+        from Simple_starlette import SimpleStarlette, Include
+
+        app = SimpleStarlette(__name__)
+
+        api = Include(app, '/api')
+
+        @api.route("/test", allow_methods=["GET])
+        async def test(request):
+            ...
+
+    ```
+    """
 
     standard_split_flag = ["", "/"]
 

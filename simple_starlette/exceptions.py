@@ -1,13 +1,14 @@
-# exceptions
-# ~~~~~~~~~~~~~~
+# exceptions handler
+# ~~~~~~~~~~~~~~~~~~~
 
 import typing
 from abc import ABCMeta, abstractstaticmethod
-from typing import Any, Type, TypeVar
+from typing import Any, Type
 
 from starlette.requests import Request
 
 from simple_starlette.responses import Response, ResTypeEnum
+from simple_starlette.types import T
 
 
 class SimpleException(Exception, metaclass=ABCMeta):
@@ -45,9 +46,6 @@ exception_handlers = typing.cast(
         RequestArgsResolvedError: RequestArgsResolvedError.exception_handle,
     },
 )
-
-
-T = TypeVar("T")
 
 
 def register_exception(cls: T) -> T:
