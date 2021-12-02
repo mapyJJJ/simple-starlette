@@ -1,5 +1,6 @@
 # db.py
 # base on: sqlalchemy
+# asyncio orm docs: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
 # ~~~~~~~~~~~~~
 
 import asyncio

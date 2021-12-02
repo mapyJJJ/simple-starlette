@@ -3,7 +3,7 @@
 
 import json
 import operator
-from typing import Literal
+from typing import Literal, cast
 
 import requests
 from jsonrpcclient import parse, request  # type: ignore
@@ -64,4 +64,4 @@ class JsonRpcClient:
             json=request(self.method_name, params=params),
             url=self.host,
         )(requests)
-        return parse(response.json())
+        return cast(Ok, parse(response.json()))

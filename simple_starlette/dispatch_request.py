@@ -55,7 +55,7 @@ async def run_in_eventloop(func: typing.Callable, *args, **kwargs):
 async def introduce_dependant_args(cls, func: Callable, data: typing.Mapping):
     """introduce depends"""
     kwargs = {}
-    for k, t in func.__annotations__.items()[1:]:
+    for k, t in list(func.__annotations__.items())[1:]:
         _args_model_name = t.__name__
 
         _args_model_obj = None

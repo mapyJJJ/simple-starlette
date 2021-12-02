@@ -75,7 +75,7 @@ class SimpleStarlette:
 
     def route(
         self,
-        path,
+        path: str,
         websocket_route: bool = False,
         allow_methods: List[str] = ["GET", "POST"],
         **options,
@@ -194,14 +194,16 @@ class SimpleStarlette:
         if path startwith namespace , it will be return
         """
         rv = []
-        for _, _r in self.iter_all_routes():
-            if _r.path.startswith(namespace):
-                rv.append(_r.path)
+        for r in self.iter_all_routes():
+            if r.path.startswith(namespace):
+                rv.append(r.path)
         return rv
 
     def iter_all_routes(self):
-        for _, _r in self.route.items().extend(list(self.websocket_routes.items())):
-            yield _r
+        for _, r in self.routes.items():
+            yield r
+        for _, r in self.websocket_routes.items():
+            yield r
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         scope["app"] = self
