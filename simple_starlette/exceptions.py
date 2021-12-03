@@ -12,18 +12,18 @@ from simple_starlette.types import T
 
 
 class SimpleException(Exception, metaclass=ABCMeta):
-    def __init__(self, err_msg: Any = "", status_code: int = 400) -> None:
+    def __init__(self, err_msg: Any = "", err_code: int = 400) -> None:
         self.err_msg = err_msg
-        self.status_code = status_code
+        self.err_code = err_code
 
     @abstractstaticmethod
-    async def exception_handle(request: Request, err: Type["SimpleException"]):
+    async def exception_handle(request: Request, err: "SimpleException"):
         Ellipsis
 
 
 async def common_exception_handle(request: Request, err: SimpleException):
     return Response(
-        {"err_msg": err.err_msg, "err_code": err.status_code}, ResTypeEnum.JSON
+        {"err_msg": err.err_msg, "err_code": err.err_code}, ResTypeEnum.JSON
     )
 
 
@@ -48,6 +48,11 @@ exception_handlers = typing.cast(
 )
 
 
-def register_exception(cls: T) -> T:
-    exception_handlers.update({cls: getattr(cls, "exception_handle")})
-    return cls
+def register_exception(code: int = None):
+    def decorator(cls: T) -> T:
+        exception_handlers.update(
+            {code if code else cls: getattr(cls, "exception_handle")}
+        )
+        return cls
+
+    return decorator

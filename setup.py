@@ -16,7 +16,7 @@ requires = [
 
 setup(
     name="simple_starlette",
-    version="0.0.4",
+    version="0.0.6",
     author="mapyJJJ",
     author_email="wszsdpyjjj@gmail.com",
     description=u"a micro server",

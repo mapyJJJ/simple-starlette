@@ -38,7 +38,7 @@ def request_response(func: typing.Callable) -> ASGIApp:
                     err_msg="Request parameter error, could not be resolved, {}".format(
                         str(e)
                     ),
-                    status_code=4041,
+                    err_code=4041,
                 )
         # dispatch request
         setattr(request, "data", data)

@@ -70,7 +70,7 @@ async def introduce_dependant_args(cls, func: Callable, data: typing.Mapping):
         try:
             kwargs[k] = _args_model_obj.parse_obj(data)
         except pydantic.ValidationError as e:
-            raise RequestArgsNoMatch(err_msg=e.errors(), status_code=4041)
+            raise RequestArgsNoMatch(err_msg=e.errors(), err_code=4041)
         return kwargs
 
 
