@@ -2,6 +2,7 @@
 # ~~~~~~~~~~~~~
 
 import contextvars
+from typing import TYPE_CHECKING, Any
 
 from werkzeug.local import LocalProxy
 
@@ -32,4 +33,15 @@ def get_global_var():
     return global_var.get()
 
 
-g = LocalProxy(get_global_var)
+if TYPE_CHECKING:
+
+    class G:
+        def __getattribute__(self, name: str) -> Any:
+            pass
+
+        def __setattr__(self, __name: str, __value):
+            pass
+
+    g = G()
+else:
+    g = LocalProxy(get_global_var)

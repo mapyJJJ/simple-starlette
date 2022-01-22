@@ -14,7 +14,7 @@ app = SimpleStarlette(__name__)
 
 @app.route("/test", allow_methods=["get"])
 async def test(request: Request):
-    return Response(request.url, ResTypeEnum.TEXT)
+    return Response(str(request.url), ResTypeEnum.TEXT)
 
 app.run()
 ```
@@ -56,7 +56,7 @@ class GetArgs(BaseModel):
     name: str
 
 @app.route("/test")
-async def test(self, request: Request, params1: GetArgs):
+async def test(request: Request, params1: GetArgs):
     return Response(params1.name, ResTypeEnum.TEXT)
 ```
 
@@ -83,7 +83,7 @@ class GetArgs(BaseModel):
     name: str
 
 @api.route("/test") # /api/test
-async def test(self, request: Request, params1: GetArgs):
+async def test(request: Request, params1: GetArgs):
     return Response(params1.name, ResTypeEnum.TEXT)
 
 app.run()
@@ -280,10 +280,13 @@ if __name__ == "__main__":
 ```
 
 ```python
+import asyncio
 from simple_starlette.rpc.json_rpc import JsonRpcClient
 
-PingServer = JsonRpcClient(host='http://localhost:5001/', method="post", method_name='ping')
-r = PingServer.get_response(params={"name": "jack"})
+async def main():
+    PingServer = JsonRpcClient(host='http://127.0.0.1:5001/', method="post", method_name='ping')
+    r = await PingServer.get_response(params={"name": "jack"})
+    print(r.result)  # pong jack
 
-print(r.result)  # pong jack
+asyncio.run(main())
 ```

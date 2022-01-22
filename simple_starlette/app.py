@@ -28,7 +28,7 @@ class SimpleStarlette:
 
     routes: Dict[str, Route] = {}
 
-    allow_methods = ["GET", "POST"]
+    allow_methods = ["get", "post"]
 
     simple_starlette_app: Starlette
 
@@ -77,7 +77,7 @@ class SimpleStarlette:
         self,
         path: str,
         websocket_route: bool = False,
-        allow_methods: List[str] = ["GET", "POST"],
+        allow_methods: List[str] = ["get", "post"],
         **options,
     ):
         """register api route

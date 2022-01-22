@@ -36,4 +36,6 @@ class Response:
         if self.res_type == ResTypeEnum.JSON:
             if isinstance(self.res, str):
                 res = json.loads(res)
+        elif self.res_type == ResTypeEnum.TEXT:
+            res = str(res)
         await self.res_class(content=res).__call__(*args, **kwds)

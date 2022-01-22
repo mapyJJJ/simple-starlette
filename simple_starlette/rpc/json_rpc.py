@@ -64,4 +64,5 @@ class JsonRpcClient:
             json=request(self.method_name, params=params),
             url=self.host,
         )(requests)
+        print(response)
         return cast(Ok, parse(response.json()))

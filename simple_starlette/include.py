@@ -38,6 +38,6 @@ class Include:
             path = "/" + path
 
         def register(cls: typing.Callable):
-            self.app.route(path, websoket_route=websoket_route, **options)(cls)
+            self.app.route(path, websocket_route=websoket_route, **options)(cls)
 
         return register
