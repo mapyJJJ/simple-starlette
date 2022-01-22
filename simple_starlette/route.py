@@ -54,7 +54,7 @@ class Route(_Route):
         path: str,
         endpoint: typing.Callable,
         *,
-        methods: typing.List[str] = None,
+        methods: typing.List[str] = [],
         name: str = None,
         include_in_schema: bool = True,
     ) -> None:

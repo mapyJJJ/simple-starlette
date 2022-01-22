@@ -62,7 +62,6 @@ if TYPE_CHECKING:
         def create(**kwargs) -> M:
             pass
 
-
 else:
 
     class DbBaseModel(Generic[M], Model):

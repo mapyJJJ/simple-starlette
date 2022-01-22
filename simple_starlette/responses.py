@@ -26,7 +26,7 @@ class ResTypeEnum(Enum):
 
 
 class Response:
-    def __init__(self, res: Any, res_type: ResTypeEnum, **options) -> Any:
+    def __init__(self, res: Any, res_type: ResTypeEnum, **options):
         self.res = res
         self.res_type = res_type
         self.res_class = res_type.value.response_class

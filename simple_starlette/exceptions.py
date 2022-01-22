@@ -3,7 +3,7 @@
 
 import typing
 from abc import ABCMeta, abstractstaticmethod
-from typing import Any, Type
+from typing import Any
 
 from starlette.requests import Request
 
@@ -17,7 +17,7 @@ class SimpleException(Exception, metaclass=ABCMeta):
         self.err_code = err_code
 
     @abstractstaticmethod
-    async def exception_handle(request: Request, err: "SimpleException"):
+    async def exception_handle(request, err: "SimpleException"):
         Ellipsis
 
 
@@ -40,7 +40,7 @@ class RequestArgsNoMatch(SimpleException):
 
 
 exception_handlers = typing.cast(
-    typing.Dict[typing.Union[int, typing.Type[Exception]], typing.Callable],
+    typing.Dict[typing.Union[int, typing.Type[Exception], T], typing.Callable],
     {
         RequestArgsNoMatch: RequestArgsNoMatch.exception_handle,
         RequestArgsResolvedError: RequestArgsResolvedError.exception_handle,
