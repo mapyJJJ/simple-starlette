@@ -1,3 +1,5 @@
+__version__ = '0.0.7'
+
 from setuptools import setup, find_packages
 
 requires = [
@@ -16,9 +18,9 @@ requires = [
 
 setup(
     name="simple_starlette",
-    version="0.0.6",
-    author="mapyJJJ",
-    author_email="wszsdpyjjj@gmail.com",
+    version=__version__,
+    author="asbt",
+    author_email="sg5htd@gmail.com",
     description=u"a micro server",
     install_requires=requires,
     packages=find_packages(),
