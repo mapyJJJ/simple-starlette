@@ -1,0 +1,13 @@
+from .py34compat import module_from_spec as module_from_spec
+from typing import Any, Optional
+
+PY_SOURCE: int
+PY_COMPILED: int
+C_EXTENSION: int
+C_BUILTIN: int
+PY_FROZEN: int
+
+def find_spec(module: Any, paths: Any): ...
+def find_module(module: Any, paths: Optional[Any] = ...): ...
+def get_frozen_object(module: Any, paths: Optional[Any] = ...): ...
+def get_module(module: Any, paths: Any, info: Any): ...

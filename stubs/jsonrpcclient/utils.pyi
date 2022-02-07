@@ -1,0 +1,3 @@
+from typing import Any, Callable
+
+def compose(*fs: Callable[..., Any]) -> Callable[..., Any]: ...

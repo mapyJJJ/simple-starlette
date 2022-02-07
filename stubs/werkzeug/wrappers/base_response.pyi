@@ -1,0 +1,9 @@
+import typing as t
+from .response import Response as Response
+
+class _FakeSubclassCheck(type):
+    def __subclasscheck__(cls, subclass: t.Type) -> bool: ...
+    def __instancecheck__(cls, instance: t.Any) -> bool: ...
+
+class BaseResponse(Response, metaclass=_FakeSubclassCheck):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None: ...

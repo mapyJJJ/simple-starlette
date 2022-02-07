@@ -1,0 +1,8 @@
+jsonrpcclient
+jsonrpcserver
+werkzeug
+setuptools
+pydantic
+sqlalchemy
+uvicorn
+starlette

@@ -2,5 +2,9 @@
     "include": [
         "simple_starlette",
         "example.py"
-    ]
+    ],
+    "ignore": [
+        "stubs"
+    ],
+    "stubPath": "stubs"
 }

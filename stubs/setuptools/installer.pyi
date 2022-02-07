@@ -1,0 +1,6 @@
+from ._deprecation_warning import SetuptoolsDeprecationWarning as SetuptoolsDeprecationWarning
+from setuptools.wheel import Wheel as Wheel
+from typing import Any
+
+def fetch_build_egg(dist: Any, req: Any): ...
+def strip_marker(req: Any): ...
