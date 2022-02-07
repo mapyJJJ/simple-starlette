@@ -9,4 +9,4 @@ step1:
     - pyright --version
     - pwd
   tags:
-    - ss-runner
+    - runner
