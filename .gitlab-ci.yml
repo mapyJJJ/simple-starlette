@@ -12,3 +12,4 @@ step1:
     - runner
   only:
     - master
+    - dev
