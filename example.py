@@ -6,6 +6,7 @@ app = SimpleStarlette(__name__)
 rpc_server = JsonRpcServer(app)
 
 
+
 @rpc_server.register_rpc_method(name="ping")
 def ping(name):
     return rpc_server.to_response(f"pong {name}")
