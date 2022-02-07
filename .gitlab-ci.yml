@@ -10,3 +10,5 @@ step1:
     - pwd
   tags:
     - runner
+  only:
+    - master
