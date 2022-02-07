@@ -1,6 +1,6 @@
-__version__ = '0.0.7'
+__version__ = "0.0.7"
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 requires = [
     "starlette>=0.16.0",

@@ -4,18 +4,18 @@
 import json
 import os
 import types
-from typing import Any
+from typing import Any, Callable
 
 
 class ConfigAttribute(object):
-    def __init__(self, attr_name, get_converter: Any = None) -> None:
+    def __init__(self, attr_name, get_converter: Callable = None) -> None:
         self.attr_name = attr_name
         self.get_converter = get_converter
 
     def __get__(self, obj, type=None):
         config = getattr(obj, "_config")
         rv = config[self.attr_name]
-        if not self.get_converter:
+        if self.get_converter:
             rv = self.get_converter(rv)
         return rv
 

@@ -14,6 +14,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from .dispatch_request import dispatch_request
 from .exceptions import RequestArgsResolvedError
+from .responses import Response
 
 try:
     import contextvars  # > python 3.6 +
@@ -42,7 +43,7 @@ def request_response(func: typing.Callable) -> ASGIApp:
                 )
         # dispatch request
         setattr(request, "data", data)
-        response = await dispatch_request(func, request, data)
+        response = typing.cast(Response, await dispatch_request(func, request, data))
         await response(scope, receive, send)
 
     return app

@@ -168,7 +168,7 @@ class SimpleStarlette:
 
         starlette_app = Starlette(
             middleware=self.middleware,
-            exception_handlers=exception_handlers,
+            exception_handlers=typing.cast(dict, exception_handlers),
             debug=self.config.get("DEBUG", False),
             routes=list([r for r in self.iter_all_routes()]),
         )

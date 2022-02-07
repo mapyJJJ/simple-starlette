@@ -3,7 +3,7 @@
 
 import json
 import operator
-from typing import Literal, cast
+from typing import cast
 
 import requests
 from jsonrpcclient import parse, request  # type: ignore
@@ -11,6 +11,7 @@ from jsonrpcclient.responses import Ok
 from jsonrpcserver import dispatch, method
 from jsonrpcserver.result import Success
 from starlette.requests import Request
+from typing_extensions import Literal
 
 from simple_starlette.app import SimpleStarlette
 from simple_starlette.responses import Response, ResTypeEnum

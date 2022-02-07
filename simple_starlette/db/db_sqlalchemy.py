@@ -60,7 +60,8 @@ if TYPE_CHECKING:
     class DbBaseModel(Generic[M]):
         @staticmethod
         def create(**kwargs) -> M:
-            pass
+            ...
+
 
 else:
 

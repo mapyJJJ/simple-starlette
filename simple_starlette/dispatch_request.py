@@ -52,7 +52,7 @@ async def run_in_eventloop(func: typing.Callable, *args, **kwargs):
     return await loop.run_in_executor(None, func, *args)
 
 
-async def introduce_dependant_args(cls, func: Callable, data: typing.Mapping):
+async def introduce_dependant_args(cls, func: typing.Any, data: typing.Mapping):
     """introduce depends"""
     kwargs = {}
     for k, t in list(func.__annotations__.items())[1:]:
@@ -79,7 +79,7 @@ async def dispatch_request(cls, request: Request, data: typing.Mapping):
     register all views obj in routes
     find target func and return response
     """
-    view_func = find_view_func(cls, request.method)
+    view_func = typing.cast(Callable, find_view_func(cls, request.method))
 
     # check func iscoroutine
     is_coroutine_func = is_coroutine(view_func)
