@@ -151,10 +151,9 @@ class Sqlalchemy:
     @staticmethod
     def gen_scopefunc(session_name: str):
         def scopefunc():
-            # from asyncio import current_task
+            from asyncio import current_task
 
-            # return f"{current_task()}_{session_name}"
-            return session_name
+            return f"{current_task()}_{session_name}"
 
         return scopefunc
     
