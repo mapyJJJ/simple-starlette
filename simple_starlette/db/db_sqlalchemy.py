@@ -3,13 +3,23 @@
 # asyncio orm docs: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
 # ~~~~~~~~~~~~~
 
-import asyncio
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
+import re
+import functools
+from simple_starlette.ctx import g
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generic,
+    TypeVar
+)
 
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
 from sqlalchemy.ext.asyncio.session import AsyncSession as _AsyncSession
 from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import Session
 
 
@@ -17,7 +27,6 @@ def check_cls_need_tablename(cls):
     if cls.__dict__.get("__abstract__", False) or not any(
         isinstance(b, DeclarativeMeta) for b in cls.__mro__[1:]
     ):
-        # 用于被继承的model, 不需要定义tablename
         return False
 
     for base in cls.__mro__:  # type: ignore
@@ -42,7 +51,16 @@ class ModelNameMixin(object):
 
     def __init__(cls, *args, **kwargs):  # type: ignore
         if check_cls_need_tablename(cls):
-            cls.__tablename__ = cls.__name__  # type: ignore
+            # 当没有主动定义 __tablename__ 时，默认取class name作为表名，如果是驼峰则转为snake
+            name = cls.__name__  # type: ignore
+            if "_" in name:
+                cls.__tablename__ = name
+            else:
+                cls.__tablename__ = name[0].lower() + re.sub(
+                    r"([A-Z])", lambda res: "_" + res.groups()[0].lower(), name[1:]
+                )
+
+            cls.__tablename__ = cls.__name__.lower()  # type: ignore
         super(ModelNameMixin, cls).__init__(*args, **kwargs)
 
 
@@ -50,23 +68,19 @@ class BaseModelMeta(ModelNameMixin, DeclarativeMeta):
     Ellipsis
 
 
-Model = declarative_base(metaclass=BaseModelMeta)
-
-
 M = TypeVar("M")
 
-if TYPE_CHECKING:
 
-    class DbBaseModel(Generic[M]):
-        @staticmethod
-        def create(**kwargs) -> M:
+class DbBaseModel(Generic[M], declarative_base(metaclass=BaseModelMeta)):
+    __abstract__ = True
+
+    if TYPE_CHECKING:
+
+        @classmethod
+        def create(cls, **kwargs) -> M:
             ...
 
-
-else:
-
-    class DbBaseModel(Generic[M], Model):
-        __abstract__ = True
+    else:
 
         @classmethod
         def create(cls, **kwargs):
@@ -81,26 +95,101 @@ class AsyncSession(_AsyncSession):
 
 
 class Sqlalchemy:
-    def __init__(self, app) -> None:
-        self.app = app
-        async_session_factory = sessionmaker(
-            self.get_engine(), expire_on_commit=False, class_=AsyncSession
-        )
-        self.Session = cast(
-            AsyncSession,
-            async_scoped_session(async_session_factory, scopefunc=asyncio.current_task),
-        )
+    """
+    init sqlalchemy
+    """
 
-    def get_async_session(self):
-        return self.Session()
+    DB_POOL_SIZE: int = 30
 
-    def get_engine(self):
-        SQLALCHEMY_DATABASE_URI = self.app.config.get("SQLALCHEMY_DATABASE_URI", "")
-        if not SQLALCHEMY_DATABASE_URI:
-            raise AttributeError(
-                "use sqlalchemy, the `SQLALCHEMY_DATABASE_URI` must be set"
-            )
-        if not SQLALCHEMY_DATABASE_URI.startswith("mysql+aiomysql"):
-            raise AttributeError("only support `mysql+aiomysql` engine")
-        engine = create_async_engine(SQLALCHEMY_DATABASE_URI)
-        return engine
+    DB_POOL_RECYCLE: int = 7200
+
+    DB_POOL_MAX_OVERFLOW: int = 0
+
+    DB_URIS: Dict[str, str] = {"master": "sqlite:///memory:"}
+
+    def __init__(self, app, async_io=True, **kwargs) -> None:
+        """
+        app -- simple-starlette app 实例
+        async_io -- 使用异步io操作数据库
+        """
+        self.async_io = async_io
+        config_options = self.make_configs(app, kwargs)
+        self.create_engine_func = create_async_engine if async_io else create_engine
+        self.engine_map = self.create_engine(config_options)
+        self.sessionmaker = functools.partial(
+            sessionmaker,
+            expire_on_commit=False,
+            class_=AsyncSession if async_io else Session,
+        )
+        self.session_factory_map = {}
+
+    def make_configs(self, app, options):
+        options.setdefault("db_uris", app.config.get("DB_URIS") or self.DB_URIS)
+        options.setdefault(
+            "pool_size", app.config.get("DB_POOL_SIZE") or self.DB_POOL_SIZE
+        )
+        options.setdefault(
+            "pool_recycle", app.config.get("DB_POOL_RECYCLE") or self.DB_POOL_RECYCLE
+        )
+        options.setdefault(
+            "max_overflow",
+            app.config.get("DB_POOL_MAX_OVERFLOW") or self.DB_POOL_MAX_OVERFLOW,
+        )
+        return options
+
+    def create_engine(self, options: dict):
+        uri_map: Dict[str, str] = options.pop("db_uris")
+        engine_map = {}
+
+        def _engine_create(uri_name):
+            engine_map[uri_name] = self.create_engine_func(uri_map[uri_name], **options)
+
+        for _u in uri_map: _engine_create(_u)
+
+        return engine_map
+
+    @staticmethod
+    def gen_scopefunc(session_name: str):
+        def scopefunc():
+            # from asyncio import current_task
+
+            # return f"{current_task()}_{session_name}"
+            return session_name
+
+        return scopefunc
+    
+    def set_ctx_db(self, name: str):
+        """set default db on context
+            db = Sqlalchemy(app)
+            db.set_ctx_db("db_master")
+            
+            session = db.session()
+
+            ...
+        """
+        
+        if name not in self.engine_map:
+            raise ValueError(f"db_name {name} not found, please check `db_uri` config")
+        g.__ctx_db_name = name
+
+    def session(self, name: str = None):
+        """
+            db = Sqlalchemy(app)
+            
+            session = db.session("master_db")
+            
+            ...
+        
+        """
+        name = name or g.get("__ctx_db_name", None)
+        if _session:=self.session_factory_map.get(name):
+            return _session()
+
+        _session_factory = self.sessionmaker(bind=self.engine_map[name])
+        _session = (
+            async_scoped_session(_session_factory, scopefunc=self.gen_scopefunc(name))
+            if self.async_io
+            else scoped_session(_session_factory, scopefunc=self.gen_scopefunc(name))
+        )
+        self.session_factory_map[name] = _session
+        return _session()

@@ -29,6 +29,7 @@ class Config(dict):
     """simple starlette config"""
 
     def from_pyfile(self, pyfile_path: str):
+        # 从py文件导入配置
         if not os.path.exists(pyfile_path):
             raise OSError("config pyfile {} on exists !".format(str(pyfile_path)))
         d = types.ModuleType("config")
@@ -40,10 +41,11 @@ class Config(dict):
         except IOError as e:
             e.strerror = "Unable to load configuration file {}".format(e.strerror)
             raise
-        self.from_obj(d)
+        self._from_obj(d)
         return
 
     def from_json(self, jsonfile_path: str):
+        # 从json文件导入配置
         if not os.path.exists(jsonfile_path):
             raise OSError("config pyfile {} on exists !".format(str(jsonfile_path)))
         try:
@@ -52,15 +54,15 @@ class Config(dict):
         except IOError as e:
             e.strerror = "Unable to load configuration file {}".format(e.strerror)
             raise
-        self.from_mappings(d)
+        self._from_mappings(d)
 
-    def from_mappings(self, mappings):
+    def _from_mappings(self, mappings):
         for _k, _v in mappings.items():
             if _k.isupper():
                 self[_k] = _v
         return
 
-    def from_obj(self, obj):
+    def _from_obj(self, obj):
         for k in dir(obj):
             if k.isupper():
                 self[k] = getattr(obj, k)

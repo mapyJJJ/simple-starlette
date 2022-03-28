@@ -28,8 +28,7 @@ def get_global_var():
 
     if global_var in contextvars.copy_context():
         return global_var.get()
-    else:
-        global_var.set(CtxStorage())
+    global_var.set(CtxStorage())
     return global_var.get()
 
 
@@ -40,6 +39,12 @@ if TYPE_CHECKING:
             Ellipsis
 
         def __setattr__(self, __name: str, __value):
+            Ellipsis
+
+        def __pop__(self, name: str, default=None) -> Any:
+            Ellipsis
+
+        def get(self, name: str, default=None) -> Any:
             Ellipsis
 
     g = G()

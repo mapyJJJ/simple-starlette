@@ -4,14 +4,14 @@
 import inspect
 import typing
 import warnings
-from typing import Any, Callable, Dict, List
+from typing import Callable, Dict, List
 
 import uvicorn
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.types import Receive, Scope, Send
 
-from simple_starlette.config import Config
+from simple_starlette.config import Config, ConfigAttribute
 
 from .exceptions import exception_handlers
 from .route import Route, WebSocketRoute
@@ -23,6 +23,8 @@ class SimpleStarlette:
     Did some more friendly to developers of functional adaptation
     simple_starlette are designed to facilitate quick used to create Web Project
     """
+
+    env = ConfigAttribute("ENV")
 
     config_class = Config
 

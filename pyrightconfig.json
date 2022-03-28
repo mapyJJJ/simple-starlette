@@ -7,5 +7,5 @@
         "stubs"
     ],
     "stubPath": "stubs",
-    "reportMissingModuleSource": "none"
+    "reportMissingModuleSource": "none",
 }
