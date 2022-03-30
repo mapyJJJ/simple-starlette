@@ -17,6 +17,17 @@ from .exceptions import exception_handlers
 from .route import Route, WebSocketRoute
 
 
+class AllowMethodsAttrConverter:
+    @staticmethod
+    def _make_methods_right(v):
+        if not isinstance(v, list):
+            raise TypeError("attr `allow_methods` must be list value")
+        if all(isinstance(n, str) for n in v):
+            v = list(map(lambda e: e.lower(), v))
+            return v
+        raise TypeError("`method` must be string type")
+
+
 class SimpleStarlette:
     """
     SimpleStarlette base on Starlette
@@ -24,13 +35,14 @@ class SimpleStarlette:
     simple_starlette are designed to facilitate quick used to create Web Project
     """
 
-    env = ConfigAttribute("ENV")
-
     config_class = Config
 
     routes: Dict[str, Route] = {}
 
-    allow_methods = ["get", "post"]
+    allow_default_methods = ConfigAttribute(
+        "allow_default_methods",
+        set_check=AllowMethodsAttrConverter._make_methods_right,
+    )
 
     simple_starlette_app: Starlette
 
@@ -39,6 +51,8 @@ class SimpleStarlette:
     def __init__(
         self,
         app_name: str,
+        config_path: str = None,
+        allow_methods: List[str] = [],
         middleware: typing.Sequence[Middleware] = None,
         after_request_stack: typing.List[Callable] = None,
         before_reqeuest_stack: typing.List[Callable] = None,
@@ -55,6 +69,10 @@ class SimpleStarlette:
         Keyword arguments:
         :app_name
             The name identifies the distinction between different instances of the APP
+        :config_path
+            read config file, load in env
+        :allow_methods
+            allow register router http methods, default [get, post]
         :middleware
             starlette middleware, look startlette.middlewares/
         :after_request_stack
@@ -65,11 +83,16 @@ class SimpleStarlette:
         """
         self.app_name = app_name
 
-        self.config = self.make_config()
+        if not allow_methods:
+            self.allow_default_methods = ["get", "post"]
+
+        self.config = self.make_config(config_path)
 
         self.middleware = middleware if middleware else []
 
-        self.after_request_stack = after_request_stack if after_request_stack else []
+        self.after_request_stack = (
+            after_request_stack if after_request_stack else []
+        )
 
         self.before_request_stack = (
             before_reqeuest_stack if before_reqeuest_stack else []
@@ -78,8 +101,8 @@ class SimpleStarlette:
     def route(
         self,
         path: str,
+        allow_methods: List[str] = [],
         websocket_route: bool = False,
-        allow_methods: List[str] = ["get", "post"],
         **options,
     ):
         """register api route
@@ -100,17 +123,23 @@ class SimpleStarlette:
                 assert (
                     path not in self.websocket_routes
                 ), f"same path `{path}` has been register"
-                self.websocket_routes[path] = WebSocketRoute(path, cls, **options)
+                self.websocket_routes[path] = WebSocketRoute(
+                    path, cls, **options
+                )
                 return
 
             if inspect.isfunction(cls):
-                self.routes[path] = Route(path, cls, methods=allow_methods, **options)
+                self.routes[path] = Route(
+                    path, cls, methods=allow_methods, **options
+                )
 
             else:
                 if allow_methods:
-                    warnings.warn("endpoint is class, params: allow_methods is useless")
+                    warnings.warn(
+                        "endpoint is class, params: allow_methods is useless"
+                    )
                 methods = []
-                for _m in self.allow_methods:
+                for _m in allow_methods or self.allow_default_methods:
                     if getattr(cls, _m, None):
                         methods.append(_m.upper())
                 if not methods:
@@ -119,12 +148,20 @@ class SimpleStarlette:
                             cls.__class__.__name__
                         )
                     )
-                self.routes[path] = Route(path, cls, methods=methods, **options)
+                self.routes[path] = Route(
+                    path, cls, methods=methods, **options
+                )
             return
 
         return register
 
-    def run(self, host: str = None, port: int = None, debug: bool = True, **options):
+    def run(
+        self,
+        host: str = None,
+        port: int = None,
+        debug: bool = True,
+        **options,
+    ):
         """Get up and running by uvicorn server
         you need to provide some parameters, ex: `host`, `port`...
 
@@ -143,6 +180,9 @@ class SimpleStarlette:
         options["debug"] = debug or self.config.get("DEBUG")
         options["port"] = port or self.config.get("PORT", 9091)
         options["host"] = host or self.config.get("HOST", "127.0.0.1")
+
+        self.config["PORT"] = port
+        self.config["HOST"] = host
 
         uvicorn.run(self, **options)
 
@@ -165,8 +205,8 @@ class SimpleStarlette:
     def gen_starlette_app(self):
         """gen starlette app"""
 
-        if hasattr(self, "starlette_app"):
-            return getattr(self, "starlette_app")
+        if starlette_app := getattr(self, "starlette_app", None):
+            return starlette_app
 
         starlette_app = Starlette(
             middleware=self.middleware,
@@ -175,13 +215,24 @@ class SimpleStarlette:
             routes=list([r for r in self.iter_all_routes()]),
         )
         self.rquest_hook(starlette_app)
-        setattr(self, "starlette_app", starlette_app)
+        self.starlette_app = starlette_app
         return starlette_app
 
-    def make_config(self):
+    def load_conf_from_file(self, config_path: str) -> None:
+        self.config.from_file(config_path)
+
+    def make_config(self, config_path: str = None):
         """return config object"""
-        default_config = {"DEBUG": False, "ENV": None}
-        return self.config_class(default_config)
+        default_config = {
+            "DEBUG": False,
+            "ENV": None,
+            "HOST": "localhost",
+            "PORT": 9091,
+        }
+        conf = self.config_class(default_config)
+        if config_path:
+            conf.from_file(config_path)
+        return conf
 
     def before_request(self, func: Callable):
         """before request event"""
@@ -207,7 +258,9 @@ class SimpleStarlette:
         for _, r in self.websocket_routes.items():
             yield r
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self, scope: Scope, receive: Receive, send: Send
+    ) -> None:
         scope["app"] = self
         starlette_app = self.gen_starlette_app()
         await starlette_app.middleware_stack(scope, receive, send)

@@ -30,7 +30,10 @@ def request_response(func: typing.Callable) -> ASGIApp:
             data = request.query_params
         else:
             try:
-                if content_type == "application/x-www-form-urlencoded":
+                if (
+                    content_type
+                    == "application/x-www-form-urlencoded"
+                ):
                     data = await request.form()
                 else:
                     data = await request.json()
@@ -43,7 +46,9 @@ def request_response(func: typing.Callable) -> ASGIApp:
                 )
         # dispatch request
         setattr(request, "data", data)
-        response = typing.cast(Response, await dispatch_request(func, request, data))
+        response = typing.cast(
+            Response, await dispatch_request(func, request, data)
+        )
         await response(scope, receive, send)
 
     return app
@@ -61,7 +66,9 @@ class Route(_Route):
     ) -> None:
         """ """
 
-        assert path.startswith("/"), "Routed paths must start with '/'"
+        assert path.startswith(
+            "/"
+        ), "Routed paths must start with '/'"
 
         self.path = path
         self.endpoint = endpoint
@@ -75,14 +82,22 @@ class Route(_Route):
         if "GET" in self.methods:
             self.methods.add("HEAD")
 
-        self.path_regex, self.path_format, self.param_convertors = compile_path(path)
+        (
+            self.path_regex,
+            self.path_format,
+            self.param_convertors,
+        ) = compile_path(path)
 
-    async def handle(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def handle(
+        self, scope: Scope, receive: Receive, send: Send
+    ) -> None:
         if self.methods and scope["method"] not in self.methods:
             if "app" in scope:
                 raise HTTPException(status_code=405)
             else:
-                response = PlainTextResponse("Method Not Allowed", status_code=405)
+                response = PlainTextResponse(
+                    "Method Not Allowed", status_code=405
+                )
             await response(scope, receive, send)
         else:
             await self.app(scope, receive, send)
@@ -90,9 +105,15 @@ class Route(_Route):
 
 class WebSocketRoute(_WebSocketRoute):
     def __init__(
-        self, path: str, endpoint: typing.Callable, *, name: str = None
+        self,
+        path: str,
+        endpoint: typing.Callable,
+        *,
+        name: str = None,
     ) -> None:
-        assert path.startswith("/"), "Routed paths must start with '/'"
+        assert path.startswith(
+            "/"
+        ), "Routed paths must start with '/'"
         self.path = path
         self.endpoint = endpoint
         self.name = get_name(endpoint) if name is None else name
@@ -110,4 +131,8 @@ class WebSocketRoute(_WebSocketRoute):
                 )
             self.app = websocket_session(getattr(endpoint, "handle"))
 
-        self.path_regex, self.path_format, self.param_convertors = compile_path(path)
+        (
+            self.path_regex,
+            self.path_format,
+            self.param_convertors,
+        ) = compile_path(path)

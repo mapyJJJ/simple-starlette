@@ -21,6 +21,8 @@ def register_args(cls: ArgsT) -> ArgsT:
             )
         )
     if cls_name in register_args_models:
-        raise AttributeError("{} aleary in register models".format(cls_name))
+        raise AttributeError(
+            "{} aleary in register models".format(cls_name)
+        )
     register_args_models[cls_name] = cls
     return cls

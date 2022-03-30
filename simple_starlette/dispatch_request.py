@@ -52,7 +52,9 @@ async def run_in_eventloop(func: typing.Callable, *args, **kwargs):
     return await loop.run_in_executor(None, func, *args)
 
 
-async def introduce_dependant_args(cls, func: typing.Any, data: typing.Mapping):
+async def introduce_dependant_args(
+    cls, func: typing.Any, data: typing.Mapping
+):
     """introduce depends"""
     kwargs = {}
     for k, t in list(func.__annotations__.items())[1:]:
@@ -62,7 +64,9 @@ async def introduce_dependant_args(cls, func: typing.Any, data: typing.Mapping):
         if not isfunction(cls):
             _args_model_obj = getattr(cls, _args_model_name, None)
         else:
-            _args_model_obj = register_args_models.get(_args_model_name, None)
+            _args_model_obj = register_args_models.get(
+                _args_model_name, None
+            )
 
         if _args_model_obj is None:
             raise Exception("no define arg obj")
@@ -70,23 +74,31 @@ async def introduce_dependant_args(cls, func: typing.Any, data: typing.Mapping):
         try:
             kwargs[k] = _args_model_obj.parse_obj(data)
         except pydantic.ValidationError as e:
-            raise RequestArgsNoMatch(err_msg=e.errors(), err_code=4041)
+            raise RequestArgsNoMatch(
+                err_msg=e.errors(), err_code=4041
+            )
         return kwargs
 
 
-async def dispatch_request(cls, request: Request, data: typing.Mapping):
+async def dispatch_request(
+    cls, request: Request, data: typing.Mapping
+):
     """dispatch request
     register all views obj in routes
     find target func and return response
     """
-    view_func = typing.cast(Callable, find_view_func(cls, request.method))
+    view_func = typing.cast(
+        Callable, find_view_func(cls, request.method)
+    )
 
     # check func iscoroutine
     is_coroutine_func = is_coroutine(view_func)
 
     # Introduce dependent parameters to the view function
     # use pydantic check request args and body
-    kwargs = await introduce_dependant_args(cls, view_func, data) or {}
+    kwargs = (
+        await introduce_dependant_args(cls, view_func, data) or {}
+    )
 
     if is_coroutine_func:
         # execute view func
@@ -94,5 +106,7 @@ async def dispatch_request(cls, request: Request, data: typing.Mapping):
     else:
         # run view func on threadpool
         # normal function , run in eventloop
-        response = await run_in_eventloop(view_func, request, **kwargs)
+        response = await run_in_eventloop(
+            view_func, request, **kwargs
+        )
     return response

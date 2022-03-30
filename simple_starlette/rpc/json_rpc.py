@@ -32,7 +32,8 @@ class JsonRpcServer:
     def gen_route(self, path):
         async def index(request: Request):
             return Response(
-                dispatch(json.dumps(getattr(request, "data"))), ResTypeEnum.JSON
+                dispatch(json.dumps(getattr(request, "data"))),
+                ResTypeEnum.JSON,
             )
 
         self.app.route(path, allow_methods=["POST"])(index)
@@ -40,7 +41,13 @@ class JsonRpcServer:
     def to_response(self, *args):
         return Success(*args)
 
-    def run(self, host: str = None, port: int = None, debug: bool = True, **options):
+    def run(
+        self,
+        host: str = None,
+        port: int = None,
+        debug: bool = True,
+        **options,
+    ):
         for _p in self.paths:
             if _p in self.app.get_paths_by_namespace(_p):
                 continue

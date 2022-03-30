@@ -13,5 +13,7 @@ class RedisClient:
     ) -> None:
         db_uri = redis_db_uri or app.config.get("REDIS_DB_URI", None)
         if not db_uri:
-            raise AttributeError("init redis db , the `REDIS_DB_URI` must be set")
+            raise AttributeError(
+                "init redis db , the `REDIS_DB_URI` must be set"
+            )
         Redis()

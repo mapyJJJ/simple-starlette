@@ -2,11 +2,12 @@
 # ~~~~~~~~~~~~~
 
 import contextvars
+from asyncio import current_task
 from typing import TYPE_CHECKING, Any
 
 from werkzeug.local import LocalProxy
 
-global_var = contextvars.ContextVar("global_var")
+global_var = contextvars.ContextVar(f"global_var")
 
 
 class CtxStorage:
