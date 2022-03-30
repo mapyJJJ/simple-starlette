@@ -31,7 +31,7 @@ class Include:
         self.app = app
         if not prefix.startswith("/"):
             raise TypeError("prefix must startwith '/'")
-        self.prefix = prefix
+        self.prefix = prefix[:-1] if prefix.endswith("/") else prefix
 
     def route(
         self, path: str, websoket_route: bool = False, **options
@@ -41,7 +41,9 @@ class Include:
 
         def register(cls: typing.Callable):
             self.app.route(
-                path, websocket_route=websoket_route, **options
+                self.prefix + path,
+                websocket_route=websoket_route,
+                **options,
             )(cls)
 
         return register

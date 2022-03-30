@@ -58,9 +58,7 @@ async def introduce_dependant_args(
     """introduce depends"""
 
     def _match_arg_model(name: str):
-        return register_args_models.get(
-            name, None
-        )
+        return register_args_models.get(name, None)
 
     kwargs = {}
     for k, t in list(func.__annotations__.items())[1:]:

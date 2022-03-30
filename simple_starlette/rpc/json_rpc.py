@@ -31,8 +31,9 @@ class JsonRpcServer:
 
     def gen_route(self, path):
         async def index(request: Request):
+            _d = getattr(request, "data", {})
             return Response(
-                dispatch(json.dumps(getattr(request, "data"))),
+                dispatch(json.dumps(_d.get("body", {}))),
                 ResTypeEnum.JSON,
             )
 
