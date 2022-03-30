@@ -6,12 +6,12 @@ import functools
 import inspect
 import typing
 from inspect import isfunction
-from typing import Callable
+from typing import Callable, Union
 
 import pydantic
 from starlette.requests import Request
 
-from simple_starlette.args import register_args_models
+from simple_starlette.args import BodyParams, QueryParams, register_args_models
 
 from .exceptions import RequestArgsNoMatch
 
@@ -53,35 +53,57 @@ async def run_in_eventloop(func: typing.Callable, *args, **kwargs):
 
 
 async def introduce_dependant_args(
-    cls, func: typing.Any, data: typing.Mapping
+    cls, func: typing.Any, data: typing.Mapping, request: Request
 ):
     """introduce depends"""
+
+    def _match_arg_model(name: str):
+        return register_args_models.get(
+            name, None
+        )
+
     kwargs = {}
     for k, t in list(func.__annotations__.items())[1:]:
         _args_model_name = t.__name__
 
-        _args_model_obj = None
-        if not isfunction(cls):
-            _args_model_obj = getattr(cls, _args_model_name, None)
+        if isfunction(cls):
+            args_model = _match_arg_model(_args_model_name)
         else:
-            _args_model_obj = register_args_models.get(
-                _args_model_name, None
+            args_model = getattr(
+                cls,
+                _args_model_name,
+                _match_arg_model(_args_model_name),
             )
 
-        if _args_model_obj is None:
+        if args_model is None:
             raise Exception("no define arg obj")
 
         try:
-            kwargs[k] = _args_model_obj.parse_obj(data)
+            if issubclass(args_model, QueryParams):
+                kwargs[k] = args_model.parse_obj(
+                    data.get("query") or {}
+                )
+            elif issubclass(args_model, BodyParams):
+                if request.method.upper() == "POST":
+                    kwargs[k] = args_model.parse_obj(
+                        data.get("body") or {}
+                    )
+                else:
+                    kwargs[k] = None
+
         except pydantic.ValidationError as e:
             raise RequestArgsNoMatch(
                 err_msg=e.errors(), err_code=4041
             )
-        return kwargs
+    return kwargs
 
 
 async def dispatch_request(
-    cls, request: Request, data: typing.Mapping
+    cls,
+    request: Request,
+    data: typing.Mapping[
+        typing.Literal["query", "body"], typing.Dict
+    ],
 ):
     """dispatch request
     register all views obj in routes
@@ -91,21 +113,20 @@ async def dispatch_request(
         Callable, find_view_func(cls, request.method)
     )
 
-    # check func iscoroutine
+    # 针对没有使用async await关键定义的视图函数，进行统一处理
     is_coroutine_func = is_coroutine(view_func)
 
-    # Introduce dependent parameters to the view function
-    # use pydantic check request args and body
+    # 根据当前request.ctx 获取相关信息，导入视图所需依赖
     kwargs = (
-        await introduce_dependant_args(cls, view_func, data) or {}
+        await introduce_dependant_args(cls, view_func, data, request)
+        or {}
     )
 
     if is_coroutine_func:
-        # execute view func
+        # 可被await的func，自动运行在eventloop中
         response = await view_func(request, **kwargs)
     else:
-        # run view func on threadpool
-        # normal function , run in eventloop
+        # 如果函数不具备await，则新创建事件循环，并在其中运行
         response = await run_in_eventloop(
             view_func, request, **kwargs
         )

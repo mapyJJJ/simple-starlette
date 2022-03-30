@@ -26,28 +26,35 @@ def request_response(func: typing.Callable) -> ASGIApp:
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
         request = Request(scope, receive=receive, send=send)
         content_type = request.headers.get("Content-Type")
-        if request.method == "GET":
-            data = request.query_params
-        else:
+        _d = {}
+        if request.query_params:
+            _d["query"] = request.query_params
+        if request.method == "POST":
             try:
                 if (
                     content_type
                     == "application/x-www-form-urlencoded"
                 ):
                     data = await request.form()
-                else:
+                elif content_type == "application/json":
                     data = await request.json()
+                else:
+                    raise TypeError(
+                        "`content_type is` `%s`, not supported"
+                        % content_type
+                    )
+                _d["body"] = data
             except Exception as e:
                 raise RequestArgsResolvedError(
-                    err_msg="Request parameter error, could not be resolved, {}".format(
+                    err_msg="Request parameter error, could not be resolved, error: {}".format(
                         str(e)
                     ),
                     err_code=4041,
                 )
         # dispatch request
-        setattr(request, "data", data)
+        setattr(request, "data", _d)
         response = typing.cast(
-            Response, await dispatch_request(func, request, data)
+            Response, await dispatch_request(func, request, _d)
         )
         await response(scope, receive, send)
 
