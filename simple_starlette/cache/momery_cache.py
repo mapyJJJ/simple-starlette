@@ -2,8 +2,12 @@
 # Generally only applies to a stand-alone deployment
 # -------------------------------------------------
 
-import collections.abc
-from typing import Any, OrderedDict, Union
+import time
+from abc import ABCMeta
+from functools import singledispatch
+from types import FunctionType
+from typing import Any, Callable, OrderedDict, Union
+
 
 class CacheIsFull(Exception):
     Ellipsis
@@ -12,7 +16,7 @@ class CacheIsFull(Exception):
 class _DefaultSize:
 
     __slots__ = ()
-    
+
     def __getitem__(self, _):
         return 1
 
@@ -22,20 +26,19 @@ class _DefaultSize:
     def pop(self, _):
         return 1
 
-class Cache(collections.abc.MutableMapping):
-    """基于长度控的memory cahce
-    基础封装类, 实现了基本的数据交互，长度控制
+
+class Cache(metaclass=ABCMeta):
     """
-        
-    __slots__ = ["maxsize", "__current_size"]
+    cache 抽象类
+    """
 
     __size_map = _DefaultSize()
-    
-    __default_marker = object()
-    
+
+    _default_marker = object()
+
     def __init__(self, maxsize: int = 1000, getsizeof=None) -> None:
         if getsizeof:
-            setattr(self,getsizeof,getsizeof)
+            setattr(self, "getsizeof", getsizeof)
         if self.getsizeof is not Cache.getsizeof:
             self.__size_map = dict()
         self.maxsize = maxsize
@@ -50,33 +53,33 @@ class Cache(collections.abc.MutableMapping):
             for _kw in kwargs.items():
                 keys += _kw
         return hash(keys).__str__()
-    
+
     def get(self, name):
         try:
             return self.cache_storage[name]
         except KeyError:
             return self.__misskey__(name)
-    
-    def put(self, name, value):
+
+    def set(self, name, value):
         # put item
         v_size = self.getsizeof(value)
         diffsize = v_size
         if name in self.cache_storage:
-            if old_size:=self.__size_map[name] != v_size:
+            if old_size := self.__size_map[name] != v_size:
                 diffsize = v_size - old_size
         else:
-            if self.__current_size + v_size >= self.maxsize:
+            if self.__current_size + v_size > self.maxsize:
                 raise CacheIsFull("attach max size")
         self.cache_storage[name] = value
         self.__size_map[name] = v_size
         self.__current_size += diffsize
-    
-    def pop(self, name, default=__default_marker):
+
+    def pop(self, name, default=_default_marker):
         # pop item
         try:
             self.cache_storage.pop(name)
         except KeyError:
-            if default is self.__default_marker:
+            if default is self._default_marker:
                 return self.__misskey__(name)
             return default
         size = self.__size_map.pop(name)
@@ -84,61 +87,182 @@ class Cache(collections.abc.MutableMapping):
 
     def check_in(self, name) -> bool:
         return name in self.cache_storage
-                
+
+    @property
+    def size(self):
+        return self.__current_size
+
     @staticmethod
     def getsizeof(_):
         # default getsizeof func
         return 1
-    
+
     def __len__(self) -> int:
         return len(self.cache_storage)
-    
+
     def __repr__(self):
-        return "<Cache maxsize=%s, current_size=%s>" % (self.maxsize, self.__current_size)
+        return "<Cache maxsize=%s, current_size=%s>" % (
+            self.maxsize,
+            self.__current_size,
+        )
 
     def __misskey__(self, key):
         raise KeyError(key)
 
 
+class _Timer:
+    """
+    timer ctx
+    """
 
-class CustomLruCache(Cache):
+    def __init__(self, point_time_func: Callable) -> None:
+        self.point_time_func = point_time_func
+        self.__time_flag = 0
+
+    def __enter__(self):
+        if self.__time_flag == 0:
+            self.__time_point = self.point_time_func()
+        self.__time_flag += 1
+        return self.__time_point
+
+    def __exit__(self, *exc):
+        self.__time_flag -= 1
+
+    def __call__(self):
+        if self.__time_flag == 0:
+            return self.point_time_func()
+        return self.__time_point
+
+
+class _TimerCache(Cache):
+    def __init__(
+        self,
+        maxsize: int,
+        getsizeof=None,
+        point_time_func=time.monotonic,
+    ) -> None:
+        super().__init__(maxsize=maxsize, getsizeof=getsizeof)
+        self.__timer = _Timer(point_time_func)
+        self.__time_map = {}
+
+    def get(self, name):
+        with self.__timer as _t:
+            expired = False
+            try:
+                if _t > self.__time_map[name]:
+                    expired = True
+            except KeyError:
+                expired = False
+            if expired:
+                self.expire_key(name)
+                return self.__misskey__(name)
+            else:
+                return super().get(name)
+
+    def default_expire_at(self, s: int):
+        return self.__timer() + s
+
+    def set(self, expire_at_factory, name, value):
+        @singledispatch
+        def _set(expire_at_factory):
+            Ellipsis
+
+        @_set.register
+        def _(expire_at_factory: int):
+            print(name, value)
+            super(_TimerCache, self).set(name, value)
+            self.__time_map[name] = self.default_expire_at(
+                expire_at_factory
+            )
+
+        @_set.register
+        def _(expire_at_factory: FunctionType):
+            super().set(name, value)
+            expire_at = expire_at_factory()
+            self.__time_map[name] = expire_at
+
+        return _set(expire_at_factory)
+
+    def pop(self, name, default=None):
+        if not default:
+            default = self._default_marker
+        super().pop(name, default)
+        self.expire_key(name)
+
+    def expire_key(self, name):
+        self.__time_map.pop(name, 0)
+        super().pop(name, 0)
+
+
+class _TTLCache(_TimerCache):
+    def __init__(
+        self,
+        maxsize: int,
+        ttl: int,
+        getsizeof=Cache.getsizeof,
+        point_time_func=time.monotonic,
+    ) -> None:
+        super().__init__(
+            maxsize,
+            getsizeof=getsizeof,
+            point_time_func=point_time_func,
+        )
+        self._ttl = ttl
+
+    def set(self, name, value):
+        super().set(
+            expire_at_factory=self._ttl, name=name, value=value
+        )
+
+    def get(self, name, raise_key_error: bool = True):
+        try:
+            return super().get(name)
+        except KeyError as e:
+            if raise_key_error:
+                raise e
+        return None
+
+    def pop(self, name):
+        super().pop(name)
+
+
+class CustomLruCache(_TTLCache):
     """
     Least Recently Used Cache
     """
 
-    def __init__(self, maxsize: int):
+    def __init__(self, maxsize: int, ttl: int):
+        super().__init__(maxsize=maxsize, ttl=ttl)
         self.cache_storage = OrderedDict()
-        self.maxsize = maxsize
 
-    def make_key(self, args, kwargs) -> str:
-        keys = args
-        if kwargs:
-            keys += (object(),)
-            for _kw in kwargs.items():
-                keys += _kw
-        return hash(keys).__str__()
-
-    def get(self, key: Union[int, str]):
-        if key not in self.cache_storage:
-            return None
-        else:
+    def get(
+        self, key: Union[int, str], raise_key_error: bool = False
+    ):
+        v = None
+        try:
+            v = super().get(key)
+        except KeyError as e:
+            if raise_key_error:
+                raise e
+        if v:
             self.cache_storage.move_to_end(key)
-            return self.cache_storage[key]
+        return v
 
-    def put(self, key: str, value: Any) -> None:
-        self.cache_storage[key] = value
+    def set(self, key: str, value: Any) -> None:
+        if self.size >= self.maxsize:
+            k = next(iter(self.cache_storage))
+            super().pop(k)
+        super().set(key, value)
         self.cache_storage.move_to_end(key)
-        if len(self.cache_storage) > self.maxsize:
-            self.cache_storage.popitem(last=False)
 
     def all(self):
         return self.cache_storage.items()
 
 
-def lru_cache_by_local_memory_decorator(
+def lru_cache_decorator(
     maxsize: int = 1000,
     cache_none_result: bool = False,
-    cache_none_result_expires: int = 60,
+    cache_ttl: int = 30 * 60 * 60,
 ):
     """cache on local
 
@@ -155,19 +279,18 @@ def lru_cache_by_local_memory_decorator(
             ...
             return result
     """
-
     def decorator(func):
-        cache_storage = CustomLruCache(maxsize)
+        cache_storage = CustomLruCache(maxsize, cache_ttl)
 
         def wrapped(*args, **kwargs):
-            key = cache_storage.make_key(args, kwargs)
+            key = cache_storage.make_key(*args, **kwargs)
             result = cache_storage.get(key)
             if result:
                 return result
             result = func(*args, **kwargs)
             if result is None and not cache_none_result:
                 return None
-            cache_storage.put(key, result)
+            cache_storage.set(key, result)
             return result
 
         return wrapped
@@ -176,8 +299,8 @@ def lru_cache_by_local_memory_decorator(
 
 
 class GlobalMemory(dict):
-    """custom cache data to mem
-    Some global variables, such as statistical data, the total line length, and so on
+    """
+    存放一些全局通用的变量，如：访问计数，server启动时间等，业务相关，请使用上面的缓存方法
     """
 
     Ellipsis
