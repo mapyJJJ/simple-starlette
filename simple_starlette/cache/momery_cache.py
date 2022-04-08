@@ -226,7 +226,7 @@ class _TTLCache(_TimerCache):
         super().pop(name)
 
 
-class CustomLruCache(_TTLCache):
+class LruCache(_TTLCache):
     """
     Least Recently Used Cache
     """
@@ -280,7 +280,7 @@ def lru_cache_decorator(
             return result
     """
     def decorator(func):
-        cache_storage = CustomLruCache(maxsize, cache_ttl)
+        cache_storage = LruCache(maxsize, cache_ttl)
 
         def wrapped(*args, **kwargs):
             key = cache_storage.make_key(*args, **kwargs)

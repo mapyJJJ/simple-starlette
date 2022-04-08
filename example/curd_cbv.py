@@ -14,7 +14,7 @@ class Index:
         a: int
         b: int
     
-    async def get(self, request: Request, q: IndexQuery):
+    async def get(self, request: Request, q: IndexQuery): # 对应 get method 
         return Response({"a": q.a, "b": q.b}, ResTypeEnum.JSON)
     
 

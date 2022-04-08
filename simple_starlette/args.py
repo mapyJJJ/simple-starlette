@@ -24,11 +24,12 @@ class BodyParams(BaseModel, metaclass=ABCMeta):
 
 def register_args(cls: ArgsT) -> ArgsT:
     cls_name = getattr(cls, "__name__")
-    if issubclass(cls, BaseModel):  # type: ignore
+    if issubclass(cls, (QueryParams, BodyParams)):  # type: ignore
         if cls_name in register_args_models:
             raise AttributeError(
                 "{} aleary in register models".format(cls_name)
             )
         register_args_models[cls_name] = cls
-
-    return cls
+    else:
+        raise Exception("define args class must be subclass of QueryParams or BodyParams")
+    return cls # type: ignore

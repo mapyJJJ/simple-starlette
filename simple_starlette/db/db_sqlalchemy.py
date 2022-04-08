@@ -3,19 +3,34 @@
 # asyncio orm docs: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
 # ~~~~~~~~~~~~~
 
-import functools
+import asyncio
+import logging
 import re
-from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generic,
+    TypeVar,
+)
+import random
 
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
-from sqlalchemy.ext.asyncio.session import AsyncSession as _AsyncSession
+from sqlalchemy import create_engine, text
+import sqlalchemy
+from sqlalchemy.ext.asyncio import (
+    async_scoped_session,
+    create_async_engine,
+)
+from sqlalchemy.ext.asyncio.session import (
+    AsyncSession as _AsyncSession,
+)
 from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
-from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.orm.scoping import scoped_session
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy.orm.session import Session
-
+from sqlalchemy.sql.dml import Update, Delete
 from simple_starlette.ctx import g
+
+logger = logging.getLogger("sqlalchemy_db")
 
 
 def check_cls_need_tablename(cls):
@@ -88,11 +103,47 @@ class DbBaseModel(
             return cls(**kwargs)
 
 
+engines = {}
+
+
+def split_read_write(clause, _flushing):
+    # 读写分离
+    if bind_name := g.get("__ctx_bind_name"):
+        print(f"cxt: db_name: {bind_name}")
+        return engines[bind_name].sync_engine
+
+    if _flushing or isinstance(clause, (Update, Delete)):  # type: ignore
+        print(f"flushing: db_name: master")
+        return engines["master"].sync_engine
+    else:
+        return engines[
+            random.choice(list(engines.keys()))
+        ].sync_engine
+
+
 class AsyncSession(_AsyncSession):
     if TYPE_CHECKING:
 
         def __call__(self, *args: Any, **kwds: Any) -> Session:
             return Session()
+
+        def add(self, instance, _warn=True):
+            ...
+
+        def add_all(self, instance):
+            ...
+
+        def expire_all(self):
+            ...
+
+        def expire(self, instance, attribute_names=None):
+            ...
+
+        def expunge(self, instance):
+            ...
+
+        def expunge_all(self):
+            ...
 
 
 class Sqlalchemy:
@@ -108,23 +159,54 @@ class Sqlalchemy:
 
     DB_URIS: Dict[str, str] = {"master": "sqlite:///memory:"}
 
+    # session instance
+    _session = None
+
+    # 读写分离插件
+    split_read_write_ext = split_read_write
+
+    class RoutingSession(Session):
+        def get_bind(self, mapper=None, clause=None, **kw):
+            if Sqlalchemy.split_read_write_ext:
+                return Sqlalchemy.split_read_write_ext(clause, self._flushing)
+
     def __init__(self, app, async_io=True, **kwargs) -> None:
         """
         app -- simple-starlette app 实例
         async_io -- 使用异步io操作数据库
         """
         self.async_io = async_io
+
         config_options = self.make_configs(app, kwargs)
         self.create_engine_func = (
             create_async_engine if async_io else create_engine
         )
-        self.engine_map = self.create_engine(config_options)
-        self.sessionmaker = functools.partial(
-            sessionmaker,
+
+        engines.update(self.create_engine(config_options))
+
+        self.db_session_maker = sessionmaker(
+            class_=AsyncSession,
+            sync_session_class=self.RoutingSession,
             expire_on_commit=False,
-            class_=AsyncSession if async_io else Session,
+            future=True,
         )
+
         self.session_factory_map = {}
+
+        if self.async_io:
+            asyncio.run(self.session.execute(text("select 1")))
+        else:
+            self.try_sync_conn()
+
+    def try_sync_conn(self):
+        for _engine in engines.values():
+            with _engine.connect() as connection:
+                connection.execute(text("select 1"))
+
+    async def try_async_conn(self):
+        for _engine in engines.values():
+            async with _engine.connect() as connection:
+                await connection.execute(text("select 1"))
 
     def make_configs(self, app, options):
         options.setdefault(
@@ -151,7 +233,7 @@ class Sqlalchemy:
 
         def _engine_create(uri_name):
             engine_map[uri_name] = self.create_engine_func(
-                uri_map[uri_name], **options
+                uri_map[uri_name], **options, future=True
             )
 
         for _u in uri_map:
@@ -160,11 +242,16 @@ class Sqlalchemy:
         return engine_map
 
     @staticmethod
-    def gen_scopefunc(session_name: str):
+    def gen_scopefunc():
         def scopefunc():
             from asyncio import current_task
 
-            return f"{current_task()}_{session_name}"
+            try:
+                return f"{current_task()}"
+            except RuntimeError:
+                return "__main_loop__"
+            except Exception as e:
+                raise e
 
         return scopefunc
 
@@ -178,36 +265,18 @@ class Sqlalchemy:
         ...
         """
 
-        if name not in self.engine_map:
+        if name not in engines:
             raise ValueError(
                 f"db_name {name} not found, please check `db_uri` config"
             )
-        g.__ctx_db_name = name
+        g.__ctx_bind_name = name
 
-    def session(self, name: str = None):
-        """
-        db = Sqlalchemy(app)
-
-        session = db.session("master_db")
-
-        ...
-
-        """
-        name = name or g.get("__ctx_db_name", None)
-        if _session := self.session_factory_map.get(name):
-            return _session()
-
-        _session_factory = self.sessionmaker(
-            bind=self.engine_map[name]
+    @property
+    def session(self) -> AsyncSession:
+        if self._session:
+            return self._session()
+        _session = async_scoped_session(
+            self.db_session_maker, scopefunc=self.gen_scopefunc()
         )
-        _session = (
-            async_scoped_session(
-                _session_factory, scopefunc=self.gen_scopefunc(name)
-            )
-            if self.async_io
-            else scoped_session(
-                _session_factory, scopefunc=self.gen_scopefunc(name)
-            )
-        )
-        self.session_factory_map[name] = _session
-        return _session()
+        self._session = _session
+        return self._session()

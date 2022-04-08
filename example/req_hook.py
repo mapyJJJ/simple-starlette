@@ -20,8 +20,7 @@ async def _do_after_request(request, response):
 
 @app.route("/test")
 async def test(request: Request):
-    print(request.url)
-    return Response("test", ResTypeEnum.TEXT)
+    return Response(str(request.url), ResTypeEnum.TEXT)
 
 
 app.run()

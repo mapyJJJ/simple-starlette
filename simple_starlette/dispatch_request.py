@@ -63,7 +63,6 @@ async def introduce_dependant_args(
     kwargs = {}
     for k, t in list(func.__annotations__.items())[1:]:
         _args_model_name = t.__name__
-
         if isfunction(cls):
             args_model = _match_arg_model(_args_model_name)
         else:
