@@ -31,5 +31,7 @@ def register_args(cls: ArgsT) -> ArgsT:
             )
         register_args_models[cls_name] = cls
     else:
-        raise Exception("define args class must be subclass of QueryParams or BodyParams")
-    return cls # type: ignore
+        raise Exception(
+            "define args class must be subclass of QueryParams or BodyParams"
+        )
+    return cls  # type: ignore

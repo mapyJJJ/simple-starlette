@@ -1,5 +1,4 @@
 import asyncio
-from typing import Tuple
 from simple_starlette.args import QueryParams
 
 from sqlalchemy import Column, Integer, String, select
@@ -18,9 +17,10 @@ from simple_starlette import (
 
 app = SimpleStarlette(__name__)
 app.config["DB_URIS"] = {
-    "master": "mysql+aiomysql://root:wszsd@localhost/testss?charset=utf8mb4"
+    "master": "mysql+aiomysql://root:123456@localhost/testss?charset=utf8mb4"  # 改为自己的 连接地址进行测试
 }
 
+# app.load_conf_from_file("example/self_config.py")
 db = Sqlalchemy(app)
 
 
@@ -48,16 +48,17 @@ async def test_db(request: Request):
         r = await db.session.execute(
             select(Label("count", count(Person.id)))
         )
-        return r.one()
+        return r.scalar()
 
     async def query():
         L = await asyncio.gather(
             query_one_person(), query_person_count()
         )
         return L
-    L: Tuple[Person, Tuple[int]] = await query()
+
+    person_instance, total_count = await query()
     return Response(
-        {"max_id": L[0].id, "total_count": L[1][0]},
+        {"max_id": person_instance.id, "total_count": total_count},
         ResTypeEnum.JSON,
     )
 
@@ -70,6 +71,7 @@ async def test_db_add(request: Request, person_args: PersonParams):
         db.session.add(new_person)
         await db.session.commit()
         return new_person
+
     p = await add_one_person()
     return Response({"id": p.id, "email": p.email}, ResTypeEnum.JSON)
 

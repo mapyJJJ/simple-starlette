@@ -1,33 +1,23 @@
 # db.py
 # base on: sqlalchemy
+# base on sqlalchemy 1.4 , use  async io
 # asyncio orm docs: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
 # ~~~~~~~~~~~~~
 
 import asyncio
 import logging
-import re
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Generic,
-    TypeVar,
-)
 import random
+import re
+from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar
 
 from sqlalchemy import create_engine, text
-import sqlalchemy
-from sqlalchemy.ext.asyncio import (
-    async_scoped_session,
-    create_async_engine,
-)
-from sqlalchemy.ext.asyncio.session import (
-    AsyncSession as _AsyncSession,
-)
+from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
+from sqlalchemy.ext.asyncio.session import AsyncSession as _AsyncSession
 from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql.dml import Update, Delete
+from sqlalchemy.sql.dml import Delete, Insert, Update
+
 from simple_starlette.ctx import g
 
 logger = logging.getLogger("sqlalchemy_db")
@@ -108,11 +98,13 @@ engines = {}
 
 def split_read_write(clause, _flushing):
     # 读写分离
+    # 默认 update onsert  insert 使用 master db
+    # query 走 任一 db
     if bind_name := g.get("__ctx_bind_name"):
         print(f"cxt: db_name: {bind_name}")
         return engines[bind_name].sync_engine
 
-    if _flushing or isinstance(clause, (Update, Delete)):  # type: ignore
+    if _flushing or isinstance(clause, (Update, Delete, Insert)):  # type: ignore
         print(f"flushing: db_name: master")
         return engines["master"].sync_engine
     else:
@@ -151,13 +143,19 @@ class Sqlalchemy:
     init sqlalchemy
     """
 
+    # ---config----
+
+    # 连接池大小（在连接池中保持打开的连接数），设置为 0，代表禁用连接池
     DB_POOL_SIZE: int = 30
 
-    DB_POOL_RECYCLE: int = 7200
+    # 池在经过给定秒数后回收连接，默认为 -1 ，没有超时，，
+    DB_POOL_RECYCLE: int = -1
 
     DB_POOL_MAX_OVERFLOW: int = 0
 
+    # 设置数据库连接，最少必须设置  master
     DB_URIS: Dict[str, str] = {"master": "sqlite:///memory:"}
+    # -----------
 
     # session instance
     _session = None
@@ -168,7 +166,7 @@ class Sqlalchemy:
     class RoutingSession(Session):
         def get_bind(self, mapper=None, clause=None, **kw):
             if Sqlalchemy.split_read_write_ext:
-                return Sqlalchemy.split_read_write_ext(clause, self._flushing)
+                return Sqlalchemy.split_read_write_ext(clause, self._flushing)  # type: ignore
 
     def __init__(self, app, async_io=True, **kwargs) -> None:
         """
@@ -261,10 +259,7 @@ class Sqlalchemy:
         db.set_ctx_db("db_master")
 
         session = db.session()
-
-        ...
         """
-
         if name not in engines:
             raise ValueError(
                 f"db_name {name} not found, please check `db_uri` config"

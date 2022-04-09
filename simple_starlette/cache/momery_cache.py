@@ -279,6 +279,7 @@ def lru_cache_decorator(
             ...
             return result
     """
+
     def decorator(func):
         cache_storage = LruCache(maxsize, cache_ttl)
 

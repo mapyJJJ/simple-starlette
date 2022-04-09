@@ -22,13 +22,14 @@ class IndexBody(BodyParams):
 
 @register_args
 class IndexBody2(BodyParams):
-    # 如果参数在业务层有区分，也可以定义多个
+    # 如果参数在业务层有区分，也可以定义多个 Params 类
     x2: Optional[str]
     y2: Optional[int]
 
 @app.route("/index/{user_id:int}", allow_methods=["GET", "POST"])
 def index(request: Request, q: IndexQuery, b: IndexBody, b2: IndexBody2): # 请将所有需要客户端发送过来的参数，作为入参定义在此处，内部直接操作这些参数即可
-    # request 必须作为第一个参数被传入，里面包含当前请求的相关信息，具体属性方法直接跳到 `Request` 查询，或者编辑器有代码提醒查看
+    # request 必须作为第一个参数被传入，里面包含当前请求的相关信息，具体属性方法直接跳到 `Request`  查看
+    print(request.path_params["user_id"])
     if request.method == "GET":
         print(q.a, q.b)  # 直接作为对象操作，获取参数
     else:
