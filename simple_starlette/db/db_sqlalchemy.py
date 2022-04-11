@@ -4,15 +4,18 @@
 # asyncio orm docs: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
 # ~~~~~~~~~~~~~
 
-import asyncio
 import logging
 import random
 import re
 from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar
 
-from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
-from sqlalchemy.ext.asyncio.session import AsyncSession as _AsyncSession
+from sqlalchemy.ext.asyncio import (
+    async_scoped_session,
+    create_async_engine,
+)
+from sqlalchemy.ext.asyncio.session import (
+    AsyncSession as _AsyncSession,
+)
 from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from sqlalchemy.orm.session import Session
@@ -163,22 +166,21 @@ class Sqlalchemy:
     # 读写分离插件
     split_read_write_ext = split_read_write
 
+    # ping sql
+    _ping_sql = "select 1"
+
     class RoutingSession(Session):
         def get_bind(self, mapper=None, clause=None, **kw):
             if Sqlalchemy.split_read_write_ext:
                 return Sqlalchemy.split_read_write_ext(clause, self._flushing)  # type: ignore
 
-    def __init__(self, app, async_io=True, **kwargs) -> None:
+    def __init__(self, app, **kwargs) -> None:
         """
         app -- simple-starlette app 实例
         async_io -- 使用异步io操作数据库
         """
-        self.async_io = async_io
-
         config_options = self.make_configs(app, kwargs)
-        self.create_engine_func = (
-            create_async_engine if async_io else create_engine
-        )
+        self.create_engine_func = create_async_engine
 
         engines.update(self.create_engine(config_options))
 
@@ -190,21 +192,6 @@ class Sqlalchemy:
         )
 
         self.session_factory_map = {}
-
-        if self.async_io:
-            asyncio.run(self.session.execute(text("select 1")))
-        else:
-            self.try_sync_conn()
-
-    def try_sync_conn(self):
-        for _engine in engines.values():
-            with _engine.connect() as connection:
-                connection.execute(text("select 1"))
-
-    async def try_async_conn(self):
-        for _engine in engines.values():
-            async with _engine.connect() as connection:
-                await connection.execute(text("select 1"))
 
     def make_configs(self, app, options):
         options.setdefault(
@@ -275,3 +262,8 @@ class Sqlalchemy:
         )
         self._session = _session
         return self._session()
+
+    @property
+    def engines_iter(self):
+        for _engine in engines.values():
+            yield _engine
