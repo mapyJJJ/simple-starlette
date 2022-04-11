@@ -58,11 +58,26 @@ exception_handlers = typing.cast(
 )
 
 
-def register_exception(code: int = None):
-    def decorator(cls):
-        exception_handlers.update(
-            {code if code else cls: getattr(cls, "exception_handle")}
-        )
+def register_exception(
+    code: int = None, err_exc_class: typing.Type[Exception] = None
+):
+    def decorator(cls: Any):
+        if code:
+            # 捕获处理 http code
+            exception_handlers.update(
+                {code: getattr(cls, "exception_handle")}
+            )
+        elif err_exc_class:
+            # 捕获处理 程序运行时某些第三方包抛出的特定Exception
+            exception_handlers.update(
+                {err_exc_class: getattr(cls, "exception_handle")}
+            )
+        else:
+            # 自定义某些错误抛出，但又想统一处理返回值
+            exception_handlers.update(
+                {cls: getattr(cls, "exception_handle")}
+            )
+
         return cls
 
     return decorator
