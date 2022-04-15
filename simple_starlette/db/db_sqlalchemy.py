@@ -7,7 +7,19 @@
 import logging
 import random
 import re
-from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar
+from datetime import datetime
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generic,
+    Text,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
 from sqlalchemy.ext.asyncio import (
     async_scoped_session,
@@ -16,14 +28,35 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.ext.asyncio.session import (
     AsyncSession as _AsyncSession,
 )
-from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.ext.declarative import (
+    DeclarativeMeta,
+    declared_attr,
+)
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm.decl_api import registry
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.dml import Delete, Insert, Update
+from sqlalchemy.sql.schema import Column
+from sqlalchemy.sql.sqltypes import (
+    BIGINT,
+    DECIMAL,
+    NUMERIC,
+    BigInteger,
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Time,
+)
 
 from simple_starlette.ctx import g
 
 logger = logging.getLogger("sqlalchemy_db")
+
+D = TypeVar("D")
+C = TypeVar("C")
 
 
 def check_cls_need_tablename(cls):
@@ -75,25 +108,193 @@ class BaseModelMeta(ModelNameMixin, DeclarativeMeta):
     Ellipsis
 
 
-M = TypeVar("M")
+mapper_register = registry()
+_Base = mapper_register.generate_base(metaclass=BaseModelMeta)
 
 
-class DbBaseModel(
-    Generic[M], declarative_base(metaclass=BaseModelMeta)
-):
-    __abstract__ = True
+class BaseModelDict(dict):
+    __table_args__ = ()
 
     if TYPE_CHECKING:
 
         @classmethod
-        def create(cls, **kwargs) -> M:
+        def create_row(cls, **kwargs):
+            return cls(**kwargs)
+
+
+class ColumnType(Generic[C], Column):
+    if TYPE_CHECKING:
+
+        def __add__(self, some) -> "ColumnType[C]":
             ...
 
-    else:
+        def __sub__(self, some) -> "ColumnType[C]":
+            ...
 
-        @classmethod
-        def create(cls, **kwargs):
-            return cls(**kwargs)
+        def __invert__(self) -> "ColumnType[C]":
+            ...
+
+        def __truediv__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __floordiv__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __mul__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __rmul__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __gt__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __lt__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __ge__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __le__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __eq__(self, some) -> "ColumnType[C]":
+            ...
+
+        def __ne__(self, some) -> "ColumnType[C]":
+            ...
+
+
+@overload
+def column_field(
+    column_type: Union[
+        Type[Integer],
+        Type[BIGINT],
+        Type[BigInteger],
+        BIGINT,
+        BigInteger,
+    ],
+    primary_key: bool = False,
+    default=None,
+    nullable=None,
+    comment=None,
+    **kwargs,
+) -> ColumnType[int]:
+    ...
+
+
+@overload
+def column_field(
+    column_type: Union[Type[Float], Type[DECIMAL], Type[NUMERIC]],
+    primary_key: bool = False,
+    default=None,
+    nullable=None,
+    comment=None,
+    **kwargs,
+) -> ColumnType[float]:
+    ...
+
+
+@overload
+def column_field(
+    column_type: Union[Type[Text], Type[String], String, Text],
+    primary_key: bool = False,
+    default=None,
+    nullable=None,
+    comment=None,
+    **kwargs,
+) -> ColumnType[str]:
+    ...
+
+
+@overload
+def column_field(
+    column_type: Union[Type[Boolean], Boolean],
+    primary_key: bool,
+    default=None,
+    nullable=None,
+    comment=None,
+    **kwargs,
+) -> ColumnType[bool]:
+    ...
+
+
+@overload
+def column_field(
+    column_type: Union[
+        Type[DateTime], Type[Date], Type[Time], DateTime, Date, Time
+    ],
+    primary_key: bool = False,
+    default=None,
+    nullable=None,
+    comment=None,
+    **kwargs,
+) -> ColumnType[datetime]:
+    ...
+
+
+def column_field(
+    column_type,
+    primary_key: bool = False,
+    default=None,
+    nullable=None,
+    comment=None,
+    **kwargs,
+):
+    return Column(
+        column_type,
+        primary_key=primary_key,
+        default=default,
+        nullable=nullable,
+        comment=comment,
+        **kwargs,
+    )
+
+
+BDC = TypeVar("BDC")
+
+
+class Never:
+    Ellipsis
+
+
+R = TypeVar("R")
+
+if TYPE_CHECKING:
+
+    def register_db_model(cls: R) -> R:
+        ...
+
+else:
+
+    def register_db_model(cls: R) -> R:
+        def register_orm_model(orm_column_map):
+            orm_column_map["create_row"] = classmethod(
+                lambda _cls, **kwargs: _cls(**kwargs)
+            )
+
+            ModelClass = type(
+                cast(
+                    str,
+                    getattr(
+                        cls, "__tablename__", getattr(cls, "__name__")
+                    ),
+                ),
+                (_Base,),
+                orm_column_map,
+            )
+            return ModelClass
+
+        fields_map = getattr(cls, "__dict__")
+        orm_column_map = {}
+        for _k, _v in fields_map.items():
+            if _k in ["__module__", "__doc__"]:
+                continue
+            orm_column_map[_k] = _v
+
+        if orm_column_map:
+            return register_orm_model(orm_column_map)
+        return cls
 
 
 engines = {}
@@ -104,11 +305,9 @@ def split_read_write(clause, _flushing):
     # 默认 update onsert  insert 使用 master db
     # query 走 任一 db
     if bind_name := g.get("__ctx_bind_name"):
-        print(f"cxt: db_name: {bind_name}")
         return engines[bind_name].sync_engine
 
     if _flushing or isinstance(clause, (Update, Delete, Insert)):  # type: ignore
-        print(f"flushing: db_name: master")
         return engines["master"].sync_engine
     else:
         return engines[
@@ -267,3 +466,7 @@ class Sqlalchemy:
     def engines_iter(self):
         for _engine in engines.values():
             yield _engine
+
+    async def create_all(self):
+        async with engines["master"].begin() as conn:
+            await conn.run_sync(_Base.metadata.create_all)

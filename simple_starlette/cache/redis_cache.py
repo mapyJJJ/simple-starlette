@@ -3,8 +3,9 @@
 # --------------------
 
 from typing import TYPE_CHECKING, Any
-from redis import ConnectionPool, Redis as _Redis
 
+from redis import ConnectionPool
+from redis import Redis as _Redis
 
 if TYPE_CHECKING:
 
