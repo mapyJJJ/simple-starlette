@@ -6,12 +6,16 @@ import functools
 import inspect
 import typing
 from inspect import isfunction
-from typing import Callable, Union
+from typing import Callable
 
 import pydantic
 from starlette.requests import Request
 
-from simple_starlette.args import BodyParams, QueryParams, register_args_models
+from simple_starlette.args import (
+    BodyParams,
+    QueryParams,
+    register_args_models,
+)
 
 from .exceptions import RequestArgsNoMatch
 
