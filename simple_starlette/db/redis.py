@@ -11,7 +11,7 @@ class RedisClient:
         app,
         redis_db_uri: str = "",
         redis_port: int = None,
-        db: int = 0
+        db: int = 0,
     ) -> None:
         db_uri = redis_db_uri or app.config.get("REDIS_DB_URI", None)
         if not db_uri:
@@ -20,5 +20,3 @@ class RedisClient:
             )
         pool = ConnectionPool(host=db_uri, port=redis_port, db=db)
         self.redis = Redis(connection_pool=pool)
-    
-    
