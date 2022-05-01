@@ -1,4 +1,4 @@
-from redis import Redis, ConnectionPool
+from redis import ConnectionPool, Redis
 
 
 class RedisCommonConfig:

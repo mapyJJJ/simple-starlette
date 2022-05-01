@@ -8,48 +8,20 @@ import logging
 import random
 import re
 from datetime import datetime
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Generic,
-    Text,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-    overload,
-)
+from typing import (TYPE_CHECKING, Any, Callable, Dict, Generic, List, Text,
+                    Type, TypeVar, Union, cast, overload)
 
-from sqlalchemy.ext.asyncio import (
-    async_scoped_session,
-    create_async_engine,
-)
-from sqlalchemy.ext.asyncio.session import (
-    AsyncSession as _AsyncSession,
-)
-from sqlalchemy.ext.declarative import (
-    DeclarativeMeta,
-    declared_attr,
-)
+from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
+from sqlalchemy.ext.asyncio.session import AsyncSession as _AsyncSession
+from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.orm.decl_api import registry
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.dml import Delete, Insert, Update
 from sqlalchemy.sql.schema import Column
-from sqlalchemy.sql.sqltypes import (
-    BIGINT,
-    DECIMAL,
-    NUMERIC,
-    BigInteger,
-    Boolean,
-    Date,
-    DateTime,
-    Float,
-    Integer,
-    String,
-    Time,
-)
+from sqlalchemy.sql.sqltypes import (BIGINT, DECIMAL, NUMERIC, BigInteger,
+                                     Boolean, Date, DateTime, Float, Integer,
+                                     String, Time)
 
 from simple_starlette.ctx import g
 
@@ -120,6 +92,37 @@ class BaseModelDict(dict):
         @classmethod
         def create_row(cls, **kwargs):
             return cls(**kwargs)
+
+
+def row_obj_to_dict(
+    obj,
+    exclude_fields: List[str] = ["_sa_instance_state"],
+    convert_func: List[Callable] = [],
+):
+    """orm 对象转为 dict
+
+    exclude_fields: 排除不必要的字段
+    convert_func: 进行一些数据操作，如 将 datetime 转换为 timestamp
+
+    配合 partial 使用
+
+    ```
+    def somefunc(obj):
+        d = obj.__dict__()
+        ...
+        return d
+    to_dict = partial(to_dict, exclude_fields=['xxx'], convert_func=[somefunc])
+    obj_dict = to_dict(obj)
+    ```
+    """
+
+    obj_dict = obj.__dict__
+    for k in exclude_fields:
+        if k in obj_dict:
+            obj_dict.pop(k)
+    for _conver_f in convert_func:
+        obj_dict = _conver_f(obj_dict)
+    return obj_dict
 
 
 class ColumnType(Generic[C], Column):
@@ -346,6 +349,7 @@ class Sqlalchemy:
     """
 
     # ---config----
+    MAIN_URI_NAME = "master"
 
     # 连接池大小（在连接池中保持打开的连接数），设置为 0，代表禁用连接池
     DB_POOL_SIZE: int = 30
@@ -379,6 +383,9 @@ class Sqlalchemy:
         async_io -- 使用异步io操作数据库
         """
         config_options = self.make_configs(app, kwargs)
+
+        self.check_conf(config_options)
+
         self.create_engine_func = create_async_engine
 
         engines.update(self.create_engine(config_options))
@@ -391,6 +398,11 @@ class Sqlalchemy:
         )
 
         self.session_factory_map = {}
+
+    def check_conf(self, conf):
+        uri_dict = conf["db_uris"]
+        if self.MAIN_URI_NAME not in uri_dict:
+            raise Exception(f"设置DB_URIS 时, {self.MAIN_URI_NAME}必须设置")
 
     def make_configs(self, app, options):
         options.setdefault(
