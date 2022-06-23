@@ -14,6 +14,7 @@
 - 数据库 `sqlalchemy.db`， 使用 `async.io` 特性，提供连接配置，开箱即用
 - 缓存提供  `Memory Cache` , `Redis Cache` ,  适应不同业务场景，部署方式
 - 提供http_client 模块 ，基于 requests 提供`before`, `after` 钩子
+- `token-auth` 中间件，提供标准的 `jwt` 鉴权模式
 ---
 
 #### 安装
