@@ -12,6 +12,7 @@ from starlette.middleware import Middleware
 from starlette.types import Receive, Scope, Send
 
 from simple_starlette.config import Config, ConfigAttribute
+from simple_starlette.types import Route as _RouteT
 
 from .exceptions import exception_handlers
 from .route import Route, WebSocketRoute
@@ -118,20 +119,19 @@ class SimpleStarlette:
             this parameter is required
         """
 
-        def register(cls: typing.Callable):
+        def register(cls: typing.Callable) -> _RouteT:
             if websocket_route:
                 assert (
                     path not in self.websocket_routes
                 ), f"same path `{path}` has been register"
-                self.websocket_routes[path] = WebSocketRoute(
-                    path, cls, **options
-                )
-                return
+                route = WebSocketRoute(path, cls, **options)
+                self.websocket_routes[path] = route
 
             if inspect.isfunction(cls):
-                self.routes[path] = Route(
+                route = Route(
                     path, cls, methods=allow_methods, **options
                 )
+                self.routes[path] = route
 
             else:
                 if allow_methods:
@@ -148,10 +148,9 @@ class SimpleStarlette:
                             cls.__class__.__name__
                         )
                     )
-                self.routes[path] = Route(
-                    path, cls, methods=methods, **options
-                )
-            return
+                route = Route(path, cls, methods=methods, **options)
+                self.routes[path] = route
+            return typing.cast(_RouteT, route)
 
         return register
 

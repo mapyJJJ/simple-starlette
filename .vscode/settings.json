@@ -7,7 +7,7 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.analysis.diagnosticMode": "workspace",
-    "editor.fontFamily": "'Droid Sans Mono', 'Courier New', monospace, 'Droid Sans Fallback'",
+    "editor.fontFamily": "Consolas, 'Courier New', monospace",
     "editor.lineHeight": 28,
     "editor.fontSize": 14,
     "editor.fontLigatures": true,

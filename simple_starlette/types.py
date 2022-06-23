@@ -10,3 +10,10 @@ ArgsT = typing.TypeVar("ArgsT", bound=object)
 SimpleApp = typing.Callable[
     [Scope, Receive, Send], typing.Awaitable[None]
 ]
+
+
+class Route:
+    path: str
+    endpoint: typing.Callable
+    name: typing.Optional[str] = None
+    include_in_schema: bool
