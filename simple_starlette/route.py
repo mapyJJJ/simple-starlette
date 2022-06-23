@@ -6,15 +6,21 @@ import typing
 
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse
+from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route as _Route
 from starlette.routing import WebSocketRoute as _WebSocketRoute
-from starlette.routing import compile_path, get_name, websocket_session
+from starlette.routing import (
+    compile_path,
+    get_name,
+    websocket_session,
+)
 from starlette.types import ASGIApp, Receive, Scope, Send
+
+from simple_starlette.middleware.token_auth import TokenAuth
+from simple_starlette.types import Route as _RouteT
 
 from .dispatch_request import dispatch_request
 from .exceptions import RequestArgsResolvedError
-from .responses import Response
 
 try:
     import contextvars  # > python 3.6 +
@@ -53,9 +59,13 @@ def request_response(func: typing.Callable) -> ASGIApp:
                 )
         # dispatch request
         setattr(request, "data", _d)
+        # 分发至业务视图函数中处理
         response = typing.cast(
             Response, await dispatch_request(func, request, _d)
         )
+        # save_session
+        response = await TokenAuth.save_session(request, response)
+
         await response(scope, receive, send)
 
     return app

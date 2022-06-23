@@ -2,12 +2,11 @@
 # ~~~~~~~~~~~~~
 
 import contextvars
-from asyncio import current_task
 from typing import TYPE_CHECKING, Any
 
 from werkzeug.local import LocalProxy
 
-global_var = contextvars.ContextVar(f"global_var")
+global_var = contextvars.ContextVar("global_var")
 
 
 class CtxStorage:
@@ -35,11 +34,11 @@ def get_global_var():
 
 if TYPE_CHECKING:
 
-    class G:
+    class GlobalVar:
         def __getattribute__(self, name: str) -> Any:
             Ellipsis
 
-        def __setattr__(self, __name: str, __value):
+        def __setattr__(self, name: str, __value):
             Ellipsis
 
         def __pop__(self, name: str, default=None) -> Any:
@@ -48,6 +47,6 @@ if TYPE_CHECKING:
         def get(self, name: str, default=None) -> Any:
             Ellipsis
 
-    g = G()
+    g = GlobalVar()
 else:
     g = LocalProxy(get_global_var)
