@@ -1,31 +1,32 @@
-__version__ = "2.0"
+__version__ = "2.1"
 
 from setuptools import find_packages, setup
 
 requires = [
-    "starlette>=0.16.0",
+    "pyjwt==2.4.0",
     "pydantic~=1.8.2",
     "werkzeug>=2.0.2",
-    "uvicorn[standard]==0.15.0",
-    "python_version>='3.8.0'",
-    "SQLAlchemy>=1.4.27",
     "aiomysql>=0.0.21",
+    "requests~=2.25.1",
+    "starlette>=0.16.0",
+    "SQLAlchemy>=1.4.27",
     "jsonrpcclient==4.0.1",
     "jsonrpcserver==5.0.4",
-    "requests~=2.25.1",
+    "python_version>='3.8.0'",
+    "uvicorn[standard]==0.15.0",
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="simple_starlette",
-    version=__version__,
     author="asbt",
-    author_email="sg5htd@gmail.com",
-    description=u"a micro server",
-    install_requires=requires,
+    version=__version__,
+    name="simple_starlette",
     packages=find_packages(),
+    install_requires=requires,
+    description="a micro server",
+    author_email="sg5htd@gmail.com",
     long_description=long_description,
-    long_description_content_type="text/markdown"
+    long_description_content_type="text/markdown",
 )
