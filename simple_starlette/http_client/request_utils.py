@@ -188,7 +188,7 @@ class Requests(RequestsCtx, RequestHookMixin):
         }
         return super().__init__()
 
-    def request(self, method, url, **kwargs):
+    def request(self, method, url = None, **kwargs):
         _hooks = {}
         for event_key in self.hooks:
             _hooks[event_key] = [_h() for _h in self.hooks[event_key]]
