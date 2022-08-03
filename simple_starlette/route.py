@@ -9,11 +9,7 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route as _Route
 from starlette.routing import WebSocketRoute as _WebSocketRoute
-from starlette.routing import (
-    compile_path,
-    get_name,
-    websocket_session,
-)
+from starlette.routing import compile_path, get_name, websocket_session
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from simple_starlette.middleware.token_auth import TokenAuth
@@ -80,6 +76,7 @@ class Route(_Route):
         methods: typing.List[str] = [],
         name: str = None,
         include_in_schema: bool = True,
+        include_name: str = None,
     ) -> None:
         """ """
 
@@ -95,9 +92,11 @@ class Route(_Route):
         # endpoint is func or method
         self.app = request_response(endpoint)
 
-        self.methods = {method.upper() for method in methods}
-        if "GET" in self.methods:
-            self.methods.add("HEAD")
+        self.include_name = include_name
+
+        self.methods = [method.upper() for method in methods]
+        # if "GET" in self.methods:
+        #     self.methods.append("HEAD")
 
         (
             self.path_regex,

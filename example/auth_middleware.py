@@ -1,13 +1,12 @@
 # TokenAuthMiddleWareGenFunc 中间件使用示例
 # 标准jwt token
 
-from starlette.responses import JSONResponse
 from starlette.requests import Request
+from starlette.responses import JSONResponse
+
 from simple_starlette import SimpleStarlette
-from simple_starlette.middleware.token_auth import (
-    TokenAuthMiddleWareGenFunc,
-    register_skip_auth_routes,
-)
+from simple_starlette.middleware.token_auth import (TokenAuthMiddleWareGenFunc,
+                                                    register_skip_auth_routes)
 
 
 async def check_is_login_process(payload: dict) -> bool:
@@ -30,7 +29,6 @@ app = SimpleStarlette(
         )
     ],
 )
-
 
 @app.route("/need_login_api")
 async def ping(request: Request):

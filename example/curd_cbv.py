@@ -1,9 +1,8 @@
 # cbv
 
-from simple_starlette.responses import ResTypeEnum, Response
+from simple_starlette import SimpleStarlette, Request
 from simple_starlette.args import QueryParams
-from requests.sessions import Request
-from simple_starlette import SimpleStarlette
+from simple_starlette.responses import Response, ResTypeEnum
 
 app = SimpleStarlette(__name__)
 

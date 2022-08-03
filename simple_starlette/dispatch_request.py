@@ -11,11 +11,8 @@ from typing import Callable
 import pydantic
 from starlette.requests import Request
 
-from simple_starlette.args import (
-    BodyParams,
-    QueryParams,
-    register_args_models,
-)
+from simple_starlette.args import (BodyParams, QueryParams, ResponseParams,
+                                   register_args_models)
 
 from .exceptions import RequestArgsNoMatch
 
@@ -66,16 +63,16 @@ async def introduce_dependant_args(
 
     kwargs = {}
     for k, t in list(func.__annotations__.items())[1:]:
-        _args_model_name = t.__name__
-        if isfunction(cls):
-            args_model = _match_arg_model(_args_model_name)
-        else:
-            args_model = getattr(
-                cls,
-                _args_model_name,
-                _match_arg_model(_args_model_name),
-            )
-
+        # _args_model_name = t.__name__
+        # if isfunction(cls):
+        #     args_model = _match_arg_model(_args_model_name)
+        # else:
+        #     args_model = getattr(
+        #         cls,
+        #         _args_model_name,
+        #         _match_arg_model(_args_model_name),
+        #     )
+        args_model = t
         if args_model is None:
             raise Exception("no define arg obj")
 
@@ -91,11 +88,10 @@ async def introduce_dependant_args(
                     )
                 else:
                     kwargs[k] = None
-
-        except pydantic.ValidationError as e:
-            raise RequestArgsNoMatch(
-                err_msg=e.errors(), err_code=4041
-            )
+            elif issubclass(args_model, ResponseParams):
+                kwargs[k] = None
+        except Exception as e:
+            raise RequestArgsNoMatch(err_msg=str(e), err_code=4041)
     return kwargs
 
 

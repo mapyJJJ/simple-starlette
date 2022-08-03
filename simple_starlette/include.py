@@ -1,7 +1,7 @@
 # route include
 # ~~~~~~~~~~~~~~
 
-import typing
+from typing import Callable, List
 
 from simple_starlette.app import SimpleStarlette
 
@@ -34,15 +34,22 @@ class Include:
         self.prefix = prefix[:-1] if prefix.endswith("/") else prefix
 
     def route(
-        self, path: str, websoket_route: bool = False, **options
+        self,
+        path: str,
+        allow_methods: List[str] = [],
+        websocket_route: bool = False,
+        **options,
     ):
         if not path.startswith("/"):
             path = "/" + path
 
-        def register(cls: typing.Callable):
+        options["include_name"] = self.prefix
+
+        def register(cls: Callable):
             self.app.route(
-                self.prefix + path,
-                websocket_route=websoket_route,
+                path=self.prefix + path,
+                websocket_route=websocket_route,
+                allow_methods=allow_methods,
                 **options,
             )(cls)
 

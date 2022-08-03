@@ -1,10 +1,11 @@
 # fbv （函数视图）使用方法
 from typing import Optional
-from simple_starlette.args import BodyParams, QueryParams, register_args
-from simple_starlette import ResTypeEnum
-from simple_starlette import SimpleStarlette, Response
+
 from requests.sessions import Request
 from starlette.requests import Request
+
+from simple_starlette import Response, ResTypeEnum, SimpleStarlette
+from simple_starlette.args import BodyParams, QueryParams, register_args
 
 app = SimpleStarlette(__name__)
 

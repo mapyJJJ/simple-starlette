@@ -22,6 +22,10 @@ class BodyParams(BaseModel, metaclass=ABCMeta):
     Ellipsis
 
 
+class ResponseParams(BaseModel, metaclass=ABCMeta):
+    Ellipsis
+
+
 def register_args(cls: ArgsT) -> ArgsT:
     cls_name = getattr(cls, "__name__")
     if issubclass(cls, (QueryParams, BodyParams)):  # type: ignore

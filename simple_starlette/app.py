@@ -2,19 +2,25 @@
 # ~~~~~~~~~~~
 
 import inspect
+import logging
 import typing
 import warnings
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Literal
 
 import uvicorn
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
+from starlette.requests import Request
 from starlette.types import Receive, Scope, Send
+from starlette.websockets import WebSocket
 
+from simple_starlette.cache.momery_cache import local_g
 from simple_starlette.config import Config, ConfigAttribute
+from simple_starlette.docs.api import DocsApi
 from simple_starlette.types import Route as _RouteT
 
 from .exceptions import exception_handlers
+from .logger import uvicorn_logger_map
 from .route import Route, WebSocketRoute
 
 
@@ -36,6 +42,8 @@ class SimpleStarlette:
     simple_starlette are designed to facilitate quick used to create Web Project
     """
 
+    run_env: Literal["prod", "dev"] = "prod"
+
     config_class = Config
 
     routes: Dict[str, Route] = {}
@@ -54,6 +62,7 @@ class SimpleStarlette:
         app_name: str,
         config_path: str = None,
         allow_methods: List[str] = [],
+        run_env: Literal["prod", "dev"] = "prod",
         middleware: typing.Sequence[Middleware] = None,
         after_request_stack: typing.List[Callable] = None,
         before_reqeuest_stack: typing.List[Callable] = None,
@@ -74,6 +83,7 @@ class SimpleStarlette:
             read config file, load in env
         :allow_methods
             allow register router http methods, default [get, post]
+        :run_env
         :middleware
             starlette middleware, look startlette.middlewares/
         :after_request_stack
@@ -83,9 +93,17 @@ class SimpleStarlette:
 
         """
         self.app_name = app_name
+        self.run_env = run_env
 
         if not allow_methods:
-            self.allow_default_methods = ["get", "post"]
+            self.allow_default_methods = [
+                "get",
+                "post",
+                "put",
+                "delete",
+                "patch",
+                "options",
+            ]
 
         self.config = self.make_config(config_path)
 
@@ -119,6 +137,29 @@ class SimpleStarlette:
             this parameter is required
         """
 
+        def CheckViewFuncParamsDefinition(
+            view_func: Callable, websocket_route: bool
+        ):
+            right_obj = WebSocket if websocket_route else Request
+
+            first_param_type = list(
+                view_func.__annotations__.items()
+            )[0][1]
+            assert (
+                first_param_type is right_obj
+            ), f"""
+                The first parameter must be used to receive the {right_obj.__name__} object, for example:
+
+                    from simple_starlette import SimpleStarlette
+                    from simple_starlette import Request
+                    
+                    app = SimpleStarlette(__name__)
+
+                    @app.route("/one", allow_methods=["GET"])
+                    async def admin_one(request: Request):  # <-- like this !!!
+                        return Response("ok", ResTypeEnum.TEXT)
+            """
+
         def register(cls: typing.Callable) -> _RouteT:
             if websocket_route:
                 assert (
@@ -126,8 +167,16 @@ class SimpleStarlette:
                 ), f"same path `{path}` has been register"
                 route = WebSocketRoute(path, cls, **options)
                 self.websocket_routes[path] = route
+            if inspect.isfunction(cls) or inspect.iscoroutinefunction(
+                cls
+            ):
+                CheckViewFuncParamsDefinition(cls, websocket_route)
 
-            if inspect.isfunction(cls):
+                if not websocket_route and not allow_methods:
+                    raise Exception(
+                        f"if websocket request, the allow_methods do not need to be set, in the `{path}` around"
+                    )
+
                 route = Route(
                     path, cls, methods=allow_methods, **options
                 )
@@ -140,7 +189,10 @@ class SimpleStarlette:
                     )
                 methods = []
                 for _m in allow_methods or self.allow_default_methods:
-                    if getattr(cls, _m, None):
+                    if view_func := getattr(cls, _m.lower(), None):
+                        CheckViewFuncParamsDefinition(
+                            view_func, websocket_route
+                        )
                         methods.append(_m.upper())
                 if not methods:
                     raise Exception(
@@ -180,9 +232,21 @@ class SimpleStarlette:
         options["port"] = port or self.config.get("PORT", 9091)
         options["host"] = host or self.config.get("HOST", "127.0.0.1")
 
-        self.config["PORT"] = port
-        self.config["HOST"] = host
+        port = self.config["PORT"] = options["port"]
 
+        host = self.config["HOST"] = options["host"]
+
+        logger = uvicorn_logger_map[logging.INFO]
+
+        if self.run_env == "dev":
+            local_g["routes"] = self.routes
+            DocsApi(self)
+            logger("INFO", f"api文档加载")
+            logger(
+                "INFO",
+                f"api文档地址: http://{host}:{port}/docs/index.html",
+            )
+        logger("INFO", f"运行环境:{self.run_env}")
         uvicorn.run(self, **options)
 
     def rquest_hook(self, starlette_app):

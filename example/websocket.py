@@ -1,4 +1,10 @@
+#--WebSocket-Example--
+"""
+在SimpleStarlette中使用基于tcp双工通信的websocket接口
+"""
+
 from starlette.websockets import WebSocket
+
 from simple_starlette import SimpleStarlette
 
 app = SimpleStarlette(__name__)
