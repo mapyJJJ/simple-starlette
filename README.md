@@ -17,7 +17,15 @@
 - `simple-api-doc`工具: 
     - 开发阶段提供类似swagger在线文档，方便前后端协作
     - 不同于swagger，它对业务代码结构完全无影响，只需要在开发阶段正常定义接口参数等，访问文档页面就会自定生成
+
 ---
+**todo**
+- 完善在线api文档
+- 实现简易异步组件
+- 全局错误日志收集 (配合显示在grafana)
+
+---
+
 
 #### 安装
 
@@ -46,7 +54,7 @@ class Index:
     async def get(self, request: Request, q: SomeQuery):
         return Response({"arg1": q.arg1, "arg2": q.arg2}, ResTypeEnum.JSON)
     
-if __name__ == "__main__"
+if __name__ == "__main__":
     app.run()
 
 # curl http://localhost:9091/test?arg1=hello&arg2=world
