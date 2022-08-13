@@ -1,11 +1,13 @@
 #   app.py
 # ~~~~~~~~~~~
 
+import copy
 import inspect
 import logging
 import typing
 import warnings
 from typing import Callable, Dict, List, Literal
+from starlette.middleware.cors import CORSMiddleware
 
 import uvicorn
 from starlette.applications import Starlette
@@ -63,7 +65,7 @@ class SimpleStarlette:
         config_path: str = None,
         allow_methods: List[str] = [],
         run_env: Literal["prod", "dev"] = "prod",
-        middleware: typing.Sequence[Middleware] = None,
+        middleware: typing.List[Middleware] = None,
         after_request_stack: typing.List[Callable] = None,
         before_reqeuest_stack: typing.List[Callable] = None,
     ) -> None:
@@ -95,20 +97,21 @@ class SimpleStarlette:
         self.app_name = app_name
         self.run_env = run_env
 
-        if not allow_methods:
-            self.allow_default_methods = [
-                "get",
-                "post",
-                "put",
-                "delete",
-                "patch",
-                "options",
-            ]
+        self.allow_default_methods = allow_methods or [
+            "get",
+            "post",
+            "put",
+            "delete",
+            "patch",
+            "options",
+        ]
 
         self.config = self.make_config(config_path)
+        self.middleware = self.preflight_check_middleware_order(
+            user_middleware=middleware
+        )
 
-        self.middleware = middleware if middleware else []
-
+        # convert request hook to middleware
         self.after_request_stack = (
             after_request_stack if after_request_stack else []
         )
@@ -116,6 +119,29 @@ class SimpleStarlette:
         self.before_request_stack = (
             before_reqeuest_stack if before_reqeuest_stack else []
         )
+
+    def preflight_check_middleware_order(
+        self, user_middleware: typing.List[Middleware] = None
+    ):
+        """
+        这是一个尴尬的问题，在cors验证前做一些cookies相关的工作，会导致程序混乱
+        理论上 cors中间件完全可以作为第一个进行处理的
+        """
+        if not user_middleware:
+            return []
+        middleware_priority = {CORSMiddleware: "0"}
+        copy_user_middleware = copy.copy(user_middleware)
+        for _middleware in user_middleware:
+            if specifity_index_str := middleware_priority.get(
+                _middleware.cls
+            ):
+                copy_user_middleware.insert(
+                    int(specifity_index_str),
+                    copy_user_middleware.pop(
+                        copy_user_middleware.index(_middleware)
+                    ),
+                )
+        return copy_user_middleware
 
     def route(
         self,
@@ -210,7 +236,7 @@ class SimpleStarlette:
         self,
         host: str = None,
         port: int = None,
-        debug: bool = True,
+        debug: bool = False,
         **options,
     ):
         """Get up and running by uvicorn server
