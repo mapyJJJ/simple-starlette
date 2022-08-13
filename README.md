@@ -55,7 +55,7 @@ if __name__ == "__main__":
 # response: {"arg1":"hello", "arg2":"world"}
 ```
 
-查看更多实例: [example usage](example.md)
+查看更多实例: [example usage](https://github.com/mapyJJJ/simple-starlette/tree/master/example)
 
 
 
