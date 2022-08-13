@@ -14,7 +14,7 @@ from starlette.staticfiles import StaticFiles
 
 from simple_starlette.args import (BodyParams, QueryParams, ResponseParams,
                                    register_args_models)
-from simple_starlette.cache.momery_cache import local_g
+from simple_starlette.cache.memory_cache import local_g
 from simple_starlette.responses import Response, ResTypeEnum
 from simple_starlette.route import Route
 
@@ -73,7 +73,6 @@ def extract_data_model(
         arg_tuple = field.type_.__dict__.get("__args__", ())
 
     def for_each_arg_tuple(arg_tuple: Tuple[Any]):
-        print(arg_tuple, end=" ")
         for arg in arg_tuple:
             if str(type(arg)) == "type":
                 # 基础类型
@@ -128,7 +127,6 @@ def parse_args_docs(
             arg_type = _field._type_display()
             sub_base_models = extract_data_model(_field)
             base_models.extend(sub_base_models)
-            print(f"arg_type_XXXXX: {arg_type}")
             arg_type = arg_type.replace("typing.", "")
             for _m in sub_base_models:
                 arg_type = re.sub(
