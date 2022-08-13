@@ -6,6 +6,7 @@ import functools
 import inspect
 import typing
 from typing import Callable
+
 from pydantic import ValidationError
 from starlette.requests import Request
 
@@ -82,7 +83,9 @@ async def introduce_dependant_args(
         except Exception as e:
             if isinstance(e, ValidationError):
                 # args error
-                raise RequestArgsNoMatch(error=e.errors(), err_code=400)
+                raise RequestArgsNoMatch(
+                    error=e.errors(), err_code=400
+                )
             raise e
     return kwargs
 

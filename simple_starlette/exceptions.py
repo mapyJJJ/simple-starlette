@@ -11,9 +11,7 @@ from simple_starlette.responses import Response, ResTypeEnum
 
 
 class SimpleException(Exception, metaclass=ABCMeta):
-    def __init__(
-        self, error: Any, err_code: int = 400
-    ) -> None:
+    def __init__(self, error: Any, err_code: int = 400) -> None:
         self.error = error
         self.err_code = err_code
 
@@ -28,7 +26,7 @@ async def common_exception_handle(
     return Response(
         {"err_msg": err.error},
         ResTypeEnum.JSON,
-        status_code=err.err_code
+        status_code=err.err_code,
     )
 
 

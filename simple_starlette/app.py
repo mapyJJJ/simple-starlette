@@ -7,11 +7,11 @@ import logging
 import typing
 import warnings
 from typing import Callable, Dict, List, Literal
-from starlette.middleware.cors import CORSMiddleware
 
 import uvicorn
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
