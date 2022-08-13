@@ -1,0 +1,43 @@
+<html>
+    <script>
+    function Login() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("POST", "http://127.0.0.1:9091/login", true);
+
+        xhttp.withCredentials=true
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.send(JSON.stringify({"name":"admin","password":"123456"}))
+    }
+    function LoadData() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("demo").innerHTML =
+            this.responseText;
+            }
+        };
+        xhttp.open("GET", "http://127.0.0.1:9091/user/one", true);
+        xhttp.withCredentials=true
+        xhttp.send();
+    }
+    function Logout() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("demo").innerHTML =
+            this.responseText;
+            }
+        };
+        xhttp.open("GET", "http://127.0.0.1:9091/logout", true);
+        xhttp.withCredentials=true
+        xhttp.send();
+    }
+    
+    </script>
+    <body>
+        <div id="demo"></div>
+        <button type="button" onclick="Login()">login</button>
+        <button type="button" onclick="LoadData()">load</button>
+        <button type="button" onclick="Logout()">logout</button>
+    </body>
+</html>
