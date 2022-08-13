@@ -9,7 +9,11 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route as _Route
 from starlette.routing import WebSocketRoute as _WebSocketRoute
-from starlette.routing import compile_path, get_name, websocket_session
+from starlette.routing import (
+    compile_path,
+    get_name,
+    websocket_session,
+)
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from simple_starlette.middleware.token_auth import TokenAuth
@@ -48,10 +52,10 @@ def request_response(func: typing.Callable) -> ASGIApp:
                 _d["body"] = data
             except Exception as e:
                 raise RequestArgsResolvedError(
-                    err_msg="Request parameter error, could not be resolved, error: {}".format(
+                    error="Request parameter error, could not be resolved, error: {}".format(
                         str(e)
                     ),
-                    err_code=4041,
+                    err_code=400,
                 )
         # dispatch request
         setattr(request, "data", _d)
@@ -78,7 +82,9 @@ class Route(_Route):
         include_in_schema: bool = True,
         include_name: str = None,
     ) -> None:
-        """ """
+        """ 
+        Route class
+        """
 
         assert path.startswith(
             "/"
