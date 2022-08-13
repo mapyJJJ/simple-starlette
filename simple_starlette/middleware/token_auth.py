@@ -181,11 +181,12 @@ class TokenAuth:
             await self.app(scope, receive, send)
             return
 
-        error_response = await self.open_session(scope, receive, send)
-        if error_response:
-            return await error_response(scope, receive, send)
+        if error_response := await self.open_session(scope, receive, send):
+            await error_response(scope, receive, send)
+            return
 
         await self.app(scope, receive, send)
+        return 
 
     @staticmethod
     def default_on_error(exc=UnauthorizedException()):
@@ -210,7 +211,8 @@ def TokenAuthMiddleWareGenFunc(
     domain: str = None,
     secure: bool = False,
     httponly: bool = False,
-    **options,
+    samesite: typing.Literal["lax", "Strict", "None"] = "lax",
+    ** options,
 ):
     options["token_name"] = token_name
     options["secret_conf"] = secret_conf
@@ -221,5 +223,6 @@ def TokenAuthMiddleWareGenFunc(
     options["path"] = path
     options["domain"] = domain
     options["secure"] = secure
+    options["samesite"] = samesite
     options["httponly"] = httponly
     return Middleware(TokenAuth, **options)
