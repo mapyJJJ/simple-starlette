@@ -2,6 +2,10 @@
 # Generally only applies to a stand-alone deployment
 # -------------------------------------------------
 
+import asyncio
+from asyncio.events import get_event_loop
+from asyncio.tasks import current_task
+from inspect import iscoroutinefunction
 import time
 from abc import ABCMeta
 from functools import singledispatch
@@ -65,7 +69,7 @@ class Cache(metaclass=ABCMeta):
         v_size = self.getsizeof(value)
         diffsize = v_size
         if name in self.cache_storage:
-            if old_size := self.__size_map[name] != v_size:
+            if old_size := self.__size_map[name]:
                 diffsize = v_size - old_size
         else:
             if self.__current_size + v_size > self.maxsize:
@@ -169,7 +173,6 @@ class _TimerCache(Cache):
 
         @_set.register
         def _(expire_at_factory: int):
-            print(name, value)
             super(_TimerCache, self).set(name, value)
             self.__time_map[name] = self.default_expire_at(
                 expire_at_factory
@@ -274,7 +277,7 @@ def lru_cache_decorator(
 
 
     Usage Example:
-        @lru_cache_by_local_memory_decorator()
+        @lru_cache_decorator()
         def calc_func(x, y, ...):
             ...
             return result
@@ -292,6 +295,49 @@ def lru_cache_decorator(
             if result is None and not cache_none_result:
                 return None
             cache_storage.set(key, result)
+            return result
+
+        return wrapped
+
+    return decorator
+
+
+def lru_cache_decorator_async(
+    maxsize: int = 1000,
+    cache_none_result: bool = False,
+    cache_ttl: int = 30 * 60 * 60,
+):
+    """cache on local
+
+    maxsize: Maximum number of hotspots section of the data, Need to think about memory leaks, reasonable setting
+
+    Back to the null:
+        cache_none_result: cache none result ?
+        cache_none_result_expires: cache none expires
+
+
+    Usage Example:
+        @lru_cache_decorator_async()
+        async def calc_func(x, y, ...):
+            ...
+            return result
+    """
+
+    def decorator(func):
+        lock = asyncio.Lock()
+        cache_storage = LruCache(maxsize, cache_ttl)
+
+        async def wrapped(*args, **kwargs):
+            key = cache_storage.make_key(*args, **kwargs)
+            result = cache_storage.get(key)
+            if result:
+                return result
+            result = await func(*args, **kwargs)
+            if result is None and not cache_none_result:
+                return None
+
+            async with lock:
+                cache_storage.set(key, result)
             return result
 
         return wrapped

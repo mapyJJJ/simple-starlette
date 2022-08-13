@@ -1,5 +1,5 @@
 from time import sleep
-from simple_starlette.cache.momery_cache import lru_cache_decorator
+from simple_starlette.cache.memory_cache import lru_cache_decorator
 
 def test_lru():
     c = 0

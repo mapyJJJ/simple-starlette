@@ -16,7 +16,7 @@ from starlette.requests import Request
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
 
-from simple_starlette.cache.momery_cache import local_g
+from simple_starlette.cache.memory_cache import local_g
 from simple_starlette.config import Config, ConfigAttribute
 from simple_starlette.docs.api import DocsApi
 from simple_starlette.types import Route as _RouteT
