@@ -6,8 +6,13 @@ from collections import namedtuple
 from enum import Enum
 from typing import Any
 
-from starlette.responses import (FileResponse, HTMLResponse, JSONResponse,
-                                 PlainTextResponse, RedirectResponse)
+from starlette.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
+)
 from starlette.responses import Response as _Response
 
 ResponseType = namedtuple(
@@ -25,7 +30,11 @@ class ResTypeEnum(Enum):
 
 class Response:
     def __init__(
-        self, content: Any, res_type: ResTypeEnum, status_code: int = 200, **options
+        self,
+        content: Any,
+        res_type: ResTypeEnum,
+        status_code: int = 200,
+        **options,
     ):
         if res_type == ResTypeEnum.JSON:
             if isinstance(content, str):

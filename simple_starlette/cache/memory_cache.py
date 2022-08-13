@@ -3,12 +3,12 @@
 # -------------------------------------------------
 
 import asyncio
-from asyncio.events import get_event_loop
-from asyncio.tasks import current_task
-from inspect import iscoroutinefunction
 import time
 from abc import ABCMeta
+from asyncio.events import get_event_loop
+from asyncio.tasks import current_task
 from functools import singledispatch
+from inspect import iscoroutinefunction
 from types import FunctionType
 from typing import Any, Callable, OrderedDict, Union
 

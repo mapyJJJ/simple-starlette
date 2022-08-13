@@ -12,8 +12,12 @@ from starlette.requests import Request
 from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
 
-from simple_starlette.args import (BodyParams, QueryParams, ResponseParams,
-                                   register_args_models)
+from simple_starlette.args import (
+    BodyParams,
+    QueryParams,
+    ResponseParams,
+    register_args_models,
+)
 from simple_starlette.cache.memory_cache import local_g
 from simple_starlette.responses import Response, ResTypeEnum
 from simple_starlette.route import Route

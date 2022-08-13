@@ -10,8 +10,12 @@ from typing import Callable
 from pydantic import ValidationError
 from starlette.requests import Request
 
-from simple_starlette.args import (BodyParams, QueryParams, ResponseParams,
-                                   register_args_models)
+from simple_starlette.args import (
+    BodyParams,
+    QueryParams,
+    ResponseParams,
+    register_args_models,
+)
 
 from .exceptions import RequestArgsNoMatch
 

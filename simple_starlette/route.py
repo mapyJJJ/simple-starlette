@@ -9,7 +9,11 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route as _Route
 from starlette.routing import WebSocketRoute as _WebSocketRoute
-from starlette.routing import compile_path, get_name, websocket_session
+from starlette.routing import (
+    compile_path,
+    get_name,
+    websocket_session,
+)
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from simple_starlette.middleware.token_auth import TokenAuth
