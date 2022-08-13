@@ -4,7 +4,7 @@
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from simple_starlette import SimpleStarlette
+from simple_starlette import SimpleStarlette, Response, ResTypeEnum
 from simple_starlette.middleware.token_auth import (TokenAuthMiddleWareGenFunc,
                                                     register_skip_auth_routes)
 from simple_starlette.middleware.cors import CorsMiddlewareGenFunc
@@ -18,7 +18,7 @@ async def check_is_login_process(payload: dict) -> bool:
 
 def custom_on_error(exc: Exception):
     # 自定义 验证未通过 时 返回值
-    return JSONResponse({"message": "未登录", "status_code": 40003})
+    return Response({"message": "未登录"}, ResTypeEnum.JSON, status_code=403)
 
 
 app = SimpleStarlette(

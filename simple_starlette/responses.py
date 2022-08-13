@@ -25,7 +25,7 @@ class ResTypeEnum(Enum):
 
 class Response:
     def __init__(
-        self, content: Any, res_type: ResTypeEnum, **options
+        self, content: Any, res_type: ResTypeEnum, status_code: int = 200, **options
     ):
         if res_type == ResTypeEnum.JSON:
             if isinstance(content, str):
@@ -33,6 +33,7 @@ class Response:
         elif res_type == ResTypeEnum.TEXT:
             res = str(content)
         resp_class = res_type.value.response_class
+        options["status_code"] = status_code
         self.resp_instance = resp_class(content=content, **options)
 
     def __getattr__(self, name: str) -> Any:
