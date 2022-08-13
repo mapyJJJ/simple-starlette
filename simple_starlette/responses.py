@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any
 
 from starlette.responses import (FileResponse, HTMLResponse, JSONResponse,
-                                 PlainTextResponse, RedirectResponse)
+                                 PlainTextResponse, RedirectResponse, Response as _Response)
 
 ResponseType = namedtuple(
     "responses_type", ["response_type", "response_class"]
@@ -23,16 +23,17 @@ class ResTypeEnum(Enum):
 
 
 class Response:
-    def __init__(self, res: Any, res_type: ResTypeEnum, **options):
-        self.res = res
-        self.res_type = res_type
-        self.res_class = res_type.value.response_class
+    def __init__(self, content: Any, res_type: ResTypeEnum, **options):
+        if res_type == ResTypeEnum.JSON:
+            if isinstance(content, str):
+                res = json.loads(content)
+        elif res_type == ResTypeEnum.TEXT:
+            res = str(content)
+        resp_class = res_type.value.response_class
+        self.resp_instance = resp_class(content=content, **options)
 
-    async def __call__(self, *args: Any, **kwds: Any) -> Any:
-        res = self.res
-        if self.res_type == ResTypeEnum.JSON:
-            if isinstance(self.res, str):
-                res = json.loads(res)
-        elif self.res_type == ResTypeEnum.TEXT:
-            res = str(res)
-        await self.res_class(content=res).__call__(*args, **kwds)
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.resp_instance, name)
+
+    def __call__(self, *args, **kwargs):
+        return self.resp_instance(*args, **kwargs)
