@@ -1,6 +1,7 @@
 # --req-hook--
 """
 使用before_request , after_request钩子（中间件）
+如果需要在请求前判断 跨域，鉴权等，可以使用已有的中间件完成操作
 """
 
 
@@ -12,6 +13,7 @@ from simple_starlette import Response, ResTypeEnum, SimpleStarlette, g
 
 app = SimpleStarlette(__name__)
 
+# 计算单个请求耗时，将结果写入 response headers
 
 @app.before_request
 async def _do_before_request(request):

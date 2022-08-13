@@ -1,4 +1,5 @@
 # fbv （函数视图）使用方法
+import datetime
 from typing import Optional
 
 from requests.sessions import Request
@@ -14,6 +15,7 @@ class IndexQuery(QueryParams):
     # 如果定义query参数，请直接继承QueryParams
     a: str
     b: int
+    c: datetime.datetime
 
 @register_args
 class IndexBody(BodyParams):
@@ -23,7 +25,7 @@ class IndexBody(BodyParams):
 
 @register_args
 class IndexBody2(BodyParams):
-    # 如果参数在业务层有区分，也可以定义多个 Params 类
+    # 如果参数在业务层有区分，也可以定义多个 BodyParams 类
     x2: Optional[str]
     y2: Optional[int]
 
@@ -32,7 +34,7 @@ def index(request: Request, q: IndexQuery, b: IndexBody, b2: IndexBody2): # 请�
     # request 必须作为第一个参数被传入，里面包含当前请求的相关信息，具体属性方法直接跳到 `Request`  查看
     print(request.path_params["user_id"])
     if request.method == "GET":
-        print(q.a, q.b)  # 直接作为对象操作，获取参数
+        print(q.a, q.b, q.c)  # 直接作为对象操作，获取参数
     else:
         print(b.x, b.y, b2.x2, b2.y2)
 

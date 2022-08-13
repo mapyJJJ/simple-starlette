@@ -9,8 +9,7 @@ from sqlalchemy.sql.functions import count
 from sqlalchemy.sql.schema import Index
 from starlette.requests import Request
 
-from simple_starlette import (Response, ResTypeEnum, SimpleStarlette,
-                              register_args)
+from simple_starlette import (Response, ResTypeEnum, SimpleStarlette)
 from simple_starlette.args import QueryParams
 from simple_starlette.db.db_sqlalchemy import (BaseModelDict, Sqlalchemy,
                                                column_field, register_db_model)
@@ -106,4 +105,8 @@ async def test_db_create_all(request: Request):
 
 
 if __name__ == "__main__":
+    """
+    1, 通过请求 test_db/create_all，创建表，当然，线上模式需要手动ddl
+    2, test_db/one 一个查询数据的示例 test_db/add 一个插入数据库的示例
+    """
     app.run()
