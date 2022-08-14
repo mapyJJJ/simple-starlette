@@ -7,7 +7,7 @@ from uvicorn.config import LOGGING_CONFIG
 def change_uvicorn_access_fmt():
     LOGGING_CONFIG["formatters"]["access"][
         "fmt"
-    ] = '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
+    ] = '%(levelprefix)s %(client_addr)s ---> "%(request_line)s" %(status_code)s'
 
 
 uvicorn_logger_map = {
