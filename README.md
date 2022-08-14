@@ -1,9 +1,10 @@
 # Simple-Starlette
 
+> 基于 Uvicorn 支持 HTTP/1.1 和 WebSockets
+
+**一个简单的微服务api框架**: 在性能，可读性以及开发耗时上寻找一个最优解
+
 ---
-
-**一个简单的微服务api框架，基于 `starlette` 框架实现**：
-
 - 支持定义`cbv`, `fbv`视图
 - 请求参数添加类型注解，传参自动校验
 - 自定义报错 , 全局报错/错误码 统一处理
@@ -20,7 +21,6 @@
 
 ---
 
-
 #### 安装
 
 使用 `pip`  直接安装
@@ -30,7 +30,7 @@ pip install simple-starlette
 
 ---
 
-#### example
+#### A Simple Example:
 
 ```python
 from simple_starlette.args import QueryParams
@@ -45,14 +45,16 @@ class Index:
         arg1: int
         arg2: int
 
-    async def get(self, request: Request, q: SomeQuery):
-        return Response({"arg1": q.arg1, "arg2": q.arg2}, ResTypeEnum.JSON)
+    async def get(self, request: Request, q: SomeQuery):  # 定义一个get请求
+        return Response({"arg1": q.arg1, "arg2": q.arg2}, ResTypeEnum.JSON) # 构造返回json字符串
     
 if __name__ == "__main__":
     app.run()
 
+# 测试请求
 # curl http://localhost:9091/test?arg1=hello&arg2=world
-# response: {"arg1":"hello", "arg2":"world"}
+# response: 
+# {"arg1":"hello", "arg2":"world"}
 ```
 
 查看更多实例: [example usage](https://github.com/mapyJJJ/simple-starlette/tree/master/example)
