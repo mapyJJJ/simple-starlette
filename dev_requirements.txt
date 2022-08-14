@@ -10,3 +10,4 @@ jsonrpcclient==4.0.1
 jsonrpcserver==5.0.4
 requests==2.25.1
 pyjwt==2.4.0
+sentry-sdk==0.10.2
