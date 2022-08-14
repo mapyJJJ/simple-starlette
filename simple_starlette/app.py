@@ -168,6 +168,11 @@ class SimpleStarlette:
         ):
             right_obj = WebSocket if websocket_route else Request
 
+            if not view_func.__annotations__:
+                raise Exception(
+                    f"视图函数: {view_func.__name__} 没有接收任何参数"
+                )
+
             first_param_type = list(
                 view_func.__annotations__.items()
             )[0][1]
