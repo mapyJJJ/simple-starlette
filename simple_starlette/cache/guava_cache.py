@@ -2,8 +2,8 @@
 import logging
 import operator
 import threading
-import typing
 import time
+import typing
 
 
 class GuavaCache:

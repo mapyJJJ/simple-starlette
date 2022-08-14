@@ -8,47 +8,20 @@ import logging
 import random
 import re
 from datetime import datetime
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Text,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-    overload,
-)
+from typing import (TYPE_CHECKING, Any, Callable, Dict, Generic, List, Text,
+                    Type, TypeVar, Union, cast, overload)
 
-from sqlalchemy.ext.asyncio import (
-    async_scoped_session,
-    create_async_engine,
-)
-from sqlalchemy.ext.asyncio.session import (
-    AsyncSession as _AsyncSession,
-)
+from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
+from sqlalchemy.ext.asyncio.session import AsyncSession as _AsyncSession
 from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.orm.decl_api import registry
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.dml import Delete, Insert, Update
 from sqlalchemy.sql.schema import Column
-from sqlalchemy.sql.sqltypes import (
-    BIGINT,
-    DECIMAL,
-    NUMERIC,
-    BigInteger,
-    Boolean,
-    Date,
-    DateTime,
-    Float,
-    Integer,
-    String,
-    Time,
-)
+from sqlalchemy.sql.sqltypes import (BIGINT, DECIMAL, NUMERIC, BigInteger,
+                                     Boolean, Date, DateTime, Float, Integer,
+                                     String, Time)
 
 from simple_starlette.ctx import g
 
