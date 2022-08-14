@@ -1,3 +1,6 @@
+# 其他sentry-sdk用法参考
+# https://docs.sentry.io/platforms/python/
+
 from simple_starlette import Request
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from starlette.middleware import Middleware

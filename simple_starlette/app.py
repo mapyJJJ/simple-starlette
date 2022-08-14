@@ -237,11 +237,17 @@ class SimpleStarlette:
 
         return register
 
+
     def run(
         self,
         host: str = None,
         port: int = None,
         debug: bool = False,
+        reload: bool = False,
+        workers: int = None,
+        limit_concurrency: int = None,
+        limit_max_requests: int = None,
+        timeout_keep_alive: int = None,
         **options,
     ):
         """Get up and running by uvicorn server
@@ -258,13 +264,17 @@ class SimpleStarlette:
             app.config["port"] = 5000
         ```
         """
-
-        options["debug"] = debug or self.config.get("DEBUG")
+        options["debug"] = debug
+        options["reload"] = reload
+        options["workers"] = workers
+        options["limit_concurrency"] = limit_concurrency
+        options["limit_max_requests"] = limit_max_requests
+        options["timeout_keep_alive"] = timeout_keep_alive
+        
         options["port"] = port or self.config.get("PORT", 9091)
         options["host"] = host or self.config.get("HOST", "127.0.0.1")
 
         port = self.config["PORT"] = options["port"]
-
         host = self.config["HOST"] = options["host"]
 
         logger = uvicorn_logger_map[logging.INFO]
