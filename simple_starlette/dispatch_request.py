@@ -1,6 +1,7 @@
 # dispatch request
 # ~~~~~~~~~~~~~~~~~
 
+import weakref
 import asyncio
 import functools
 import inspect
@@ -10,8 +11,12 @@ from typing import Callable
 from pydantic import ValidationError
 from starlette.requests import Request
 
-from simple_starlette.args import (BodyParams, QueryParams, ResponseParams,
-                                   register_args_models)
+from simple_starlette.args import (
+    BodyParams,
+    QueryParams,
+    ResponseParams,
+    register_args_models,
+)
 
 from .exceptions import RequestArgsNoMatch
 
@@ -116,10 +121,10 @@ async def dispatch_request(
 
     if is_coroutine_func:
         # 可被await的func，自动运行在eventloop中
-        response = await view_func(request, **kwargs)
+        response = await view_func(weakref.proxy(request), **kwargs)
     else:
         # 如果函数不具备await，则新创建事件循环，并在其中运行
         response = await run_in_eventloop(
-            view_func, request, **kwargs
+            view_func, weakref.proxy(request), **kwargs
         )
     return response

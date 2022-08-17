@@ -347,10 +347,12 @@ def lru_cache_decorator_async(
 
 class GlobalMemory(dict):
     """
-    存放一些全局通用的变量，如：访问计数，server启动时间等，业务相关，请使用上面的缓存方法
-    """
-
+    
+    cache use local mem
+    save the Request Context temporary variable better approach is to use the SimpleStarlette.G object
+    if the variable exists in the App All lifecycle, please note that memory overflow problem(OOM)
+    """    
     Ellipsis
 
-
+# `local` especially the local machine memory
 local_g = GlobalMemory()

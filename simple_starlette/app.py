@@ -247,7 +247,7 @@ class SimpleStarlette:
         workers: int = None,
         limit_concurrency: int = None,
         limit_max_requests: int = None,
-        timeout_keep_alive: int = None,
+        timeout_keep_alive: int = 5,
         **options,
     ):
         """Get up and running by uvicorn server
