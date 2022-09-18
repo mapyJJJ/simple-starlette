@@ -62,14 +62,14 @@ class TokenAuth:
         token_name: str = "token",
         secret_conf: str = "secret",
         algorithm_conf: str = "HS256",
-        validate_process: typing.Callable[
-            [typing.Dict], typing.Coroutine
+        validate_process: typing.Optional[
+            typing.Callable[[typing.Dict], typing.Coroutine]
         ] = None,
-        on_error: typing.Callable = None,
-        max_age: int = None,
-        expires: int = None,
+        on_error: typing.Optional[typing.Callable] = None,
+        max_age: typing.Optional[int] = None,
+        expires: typing.Optional[int] = None,
         path: str = "/",
-        domain: str = None,
+        domain: typing.Optional[str] = None,
         secure: bool = False,
         httponly: bool = False,
         samesite: str = "lax",
@@ -204,13 +204,13 @@ def TokenAuthMiddleWareGenFunc(
     token_name: str = "token",
     secret_conf: str = "secret",
     algorithm_conf: str = "HS256",
-    validate_process: typing.Callable[
-        [typing.Dict], typing.Coroutine
+    validate_process: typing.Optional[
+        typing.Callable[[typing.Dict], typing.Coroutine]
     ] = None,
-    on_error: typing.Callable = None,
-    expires: int = None,
+    on_error: typing.Optional[typing.Callable] = None,
+    expires: typing.Optional[int] = None,
     path: str = "/",
-    domain: str = None,
+    domain: typing.Optional[str] = None,
     secure: bool = False,
     httponly: bool = False,
     samesite: typing.Literal["lax", "Strict", "None"] = "lax",

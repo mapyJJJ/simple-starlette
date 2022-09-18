@@ -13,7 +13,7 @@ from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
 
 from simple_starlette.args import (BodyParams, QueryParams, ResponseParams,
-                                   register_args_models)
+                                   request_args_model_map)
 from simple_starlette.cache.memory_cache import local_g
 from simple_starlette.responses import Response, ResTypeEnum
 from simple_starlette.route import Route
@@ -92,38 +92,19 @@ def extract_data_model(
 
 def parse_args_docs(
     cls, view_func: Callable
-) -> Tuple[Dict[str, list], Union[List[ModelMetaclass]]]:
+) -> Tuple[Dict[str, list], List[ModelMetaclass]]:
     def _match_arg_model(name: str):
-        return register_args_models.get(name, None)
+        return request_args_model_map.get(name, None)
 
     base_models = []
     args_dict = defaultdict(list)
     for _, t in list(view_func.__annotations__.items())[1:]:
         _args_model_name = t.__name__
-        # if inspect.isfunction(cls):
-        #     args_model = _match_arg_model(_args_model_name)
-        # else:
-        #     args_model = getattr(
-        #         cls,
-        #         _args_model_name,
-        #         _match_arg_model(_args_model_name),
-        #     )
         args_model = t
         if not args_model:
             continue
         arg_docs_list = []
         for _fn, _field in args_model.__fields__.items():
-            # arg_type = None
-            # modifyfield_args_tuple = _field.__repr_args__()
-            # for (k, v) in modifyfield_args_tuple:
-            #     if k != "type":
-            #         continue
-            #     arg_type = str(v)
-            # arg_type = (
-            #     str(_field.type_)
-            #     if type(_field.type_) != "type"
-            #     else str(_field.type_)
-            # )
             arg_type = _field._type_display()
             sub_base_models = extract_data_model(_field)
             base_models.extend(sub_base_models)

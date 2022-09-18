@@ -14,7 +14,7 @@ from typing import Any, Callable, OrderedDict, Union
 
 
 class CacheIsFull(Exception):
-    Ellipsis
+    ...
 
 
 class _DefaultSize:
@@ -169,7 +169,7 @@ class _TimerCache(Cache):
     def set(self, expire_at_factory, name, value):
         @singledispatch
         def _set(expire_at_factory):
-            Ellipsis
+            ...
 
         @_set.register
         def _(expire_at_factory: int):
@@ -347,12 +347,14 @@ def lru_cache_decorator_async(
 
 class GlobalMemory(dict):
     """
-    
+
     cache use local mem
     save the Request Context temporary variable better approach is to use the SimpleStarlette.G object
     if the variable exists in the App All lifecycle, please note that memory overflow problem(OOM)
-    """    
-    Ellipsis
+    """
+
+    ...
+
 
 # `local` especially the local machine memory
 local_g = GlobalMemory()

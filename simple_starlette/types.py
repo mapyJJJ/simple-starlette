@@ -3,6 +3,7 @@
 
 import typing
 
+from starlette.middleware import Middleware
 from starlette.types import Receive, Scope, Send
 
 T = typing.TypeVar("T")
@@ -10,6 +11,7 @@ ArgsT = typing.TypeVar("ArgsT", bound=object)
 SimpleApp = typing.Callable[
     [Scope, Receive, Send], typing.Awaitable[None]
 ]
+_L_M: typing.TypeAlias = typing.Optional[typing.List[Middleware]]
 
 
 class Route:

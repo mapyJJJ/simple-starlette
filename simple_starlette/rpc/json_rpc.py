@@ -3,7 +3,7 @@
 
 import json
 import operator
-from typing import cast
+from typing import Awaitable, Dict, NoReturn, Optional, Type, cast
 
 import requests
 from jsonrpcclient import parse, request  # type: ignore
@@ -22,18 +22,20 @@ class JsonRpcServer:
         self.app = app
         self.paths = []
 
-    def register_rpc_method(self, path: str = "/", name: str = None):
-        def decorator(func):
+    def register_rpc_method(
+        self, path: str = "/", name: Optional[str] = None
+    ):
+        def wrapped(func):
             self.paths.append(path)
             method(func, name=name)
 
-        return decorator
+        return wrapped
 
-    def gen_route(self, path):
-        async def index(request: Request):
-            _d = getattr(request, "data", {})
+    def register_route(self, path) -> None:
+        async def index(request: Request) -> Response:
+            request_data = getattr(request, "data", {})
             return Response(
-                dispatch(json.dumps(_d.get("body", {}))),
+                dispatch(json.dumps(request_data.get("body", {}))),
                 ResTypeEnum.JSON,
             )
 
@@ -44,15 +46,15 @@ class JsonRpcServer:
 
     def run(
         self,
-        host: str = None,
-        port: int = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
         debug: bool = True,
         **options,
     ):
-        for _p in self.paths:
-            if _p in self.app.get_paths_by_namespace(_p):
+        for _path in self.paths:
+            if _path in self.app.get_paths_by_namespace(_path):
                 continue
-            self.gen_route(_p)
+            self.register_route(_path)
         self.app.run(host=host, port=port, debug=debug, **options)
 
 
@@ -61,13 +63,13 @@ class JsonRpcClient:
         self,
         host: str,
         method: Literal["get", "post"] = "post",
-        method_name: str = None,
+        method_name: Optional[str] = None,
     ) -> None:
         self.host = host
         self.method = method
         self.method_name = method_name
 
-    async def get_response(self, params: dict) -> Ok:
+    async def get_response(self, params: Dict[str, str]) -> Ok:
         response = operator.methodcaller(
             self.method.lower(),
             json=request(self.method_name, params=params),

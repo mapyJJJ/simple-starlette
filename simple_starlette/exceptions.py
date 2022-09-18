@@ -17,7 +17,7 @@ class SimpleException(Exception, metaclass=ABCMeta):
 
     @abstractstaticmethod
     async def exception_handle(request, err: "SimpleException"):
-        Ellipsis
+        ...
 
 
 async def common_exception_handle(
@@ -58,9 +58,10 @@ exception_handlers = typing.cast(
 
 
 def register_exception(
-    code: int = None, err_exc_class: typing.Type[Exception] = None
+    code: typing.Optional[int] = None,
+    err_exc_class: typing.Optional[typing.Type[Exception]] = None,
 ):
-    def decorator(cls: Any):
+    def wrapped(cls: Any):
         if code:
             # 捕获处理 http code
             exception_handlers.update(
@@ -79,4 +80,4 @@ def register_exception(
 
         return cls
 
-    return decorator
+    return wrapped

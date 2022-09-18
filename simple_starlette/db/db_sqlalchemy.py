@@ -77,7 +77,7 @@ class ModelNameMixin(object):
 
 
 class BaseModelMeta(ModelNameMixin, DeclarativeMeta):
-    Ellipsis
+    ...
 
 
 mapper_register = registry()
@@ -258,7 +258,7 @@ BDC = TypeVar("BDC")
 
 
 class Never:
-    Ellipsis
+    ...
 
 
 R = TypeVar("R")

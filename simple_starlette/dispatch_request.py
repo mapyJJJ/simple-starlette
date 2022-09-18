@@ -1,22 +1,18 @@
 # dispatch request
 # ~~~~~~~~~~~~~~~~~
 
-import weakref
 import asyncio
 import functools
 import inspect
 import typing
+import weakref
 from typing import Callable
 
 from pydantic import ValidationError
 from starlette.requests import Request
 
-from simple_starlette.args import (
-    BodyParams,
-    QueryParams,
-    ResponseParams,
-    register_args_models,
-)
+from simple_starlette.args import (BodyParams, QueryParams, ResponseParams,
+                                   request_args_model_map)
 
 from .exceptions import RequestArgsNoMatch
 
@@ -63,7 +59,7 @@ async def introduce_dependant_args(
     """introduce depends"""
 
     def _match_arg_model(name: str):
-        return register_args_models.get(name, None)
+        return request_args_model_map.get(name, None)
 
     kwargs = {}
     for k, t in list(func.__annotations__.items())[1:]:

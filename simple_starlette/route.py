@@ -74,9 +74,9 @@ class Route(_Route):
         endpoint: typing.Callable,
         *,
         methods: typing.List[str] = [],
-        name: str = None,
+        name: typing.Optional[str] = None,
         include_in_schema: bool = True,
-        include_name: str = None,
+        include_name: typing.Optional[str] = None,
     ) -> None:
         """
         Route class
@@ -127,7 +127,7 @@ class WebSocketRoute(_WebSocketRoute):
         path: str,
         endpoint: typing.Callable,
         *,
-        name: str = None,
+        name: typing.Optional[str] = None,
     ) -> None:
         assert path.startswith(
             "/"

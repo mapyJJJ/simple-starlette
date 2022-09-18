@@ -4,15 +4,15 @@
 import json
 import os
 import types
-from typing import Callable
+from typing import Callable, Optional
 
 
 class ConfigAttribute(object):
     def __init__(
         self,
         attr_name,
-        get_converter: Callable = None,
-        set_check: Callable = None,
+        get_converter: Optional[Callable] = None,
+        set_check: Optional[Callable] = None,
     ) -> None:
         self.attr_name = attr_name
         self.set_check = set_check

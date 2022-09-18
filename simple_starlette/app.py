@@ -24,6 +24,7 @@ from simple_starlette.types import Route as _RouteT
 from .exceptions import exception_handlers
 from .logger import uvicorn_logger_map
 from .route import Route, WebSocketRoute
+from .types import _L_M
 
 
 class AllowMethodsAttrConverter:
@@ -62,12 +63,16 @@ class SimpleStarlette:
     def __init__(
         self,
         app_name: str,
-        config_path: str = None,
+        config_path: typing.Optional[str] = None,
         allow_methods: List[str] = [],
         run_env: Literal["prod", "dev"] = "prod",
-        middleware: typing.List[Middleware] = None,
-        after_request_stack: typing.List[Callable] = None,
-        before_reqeuest_stack: typing.List[Callable] = None,
+        middleware: _L_M = None,
+        after_request_stack: typing.Optional[
+            typing.List[Callable]
+        ] = None,
+        before_reqeuest_stack: typing.Optional[
+            typing.List[Callable]
+        ] = None,
     ) -> None:
         """init simplestarlette app
 
@@ -121,11 +126,12 @@ class SimpleStarlette:
         )
 
     def preflight_check_middleware_order(
-        self, user_middleware: typing.List[Middleware] = None
+        self, user_middleware: _L_M = None
     ):
         """
-        这是一个尴尬的问题，在cors验证前做一些cookies相关的工作，会导致程序混乱
-        理论上 cors中间件完全可以作为第一个进行处理的
+        TIPS:
+            这是一个尴尬的问题，在cors验证前做一些cookie相关的工作，会导致程序混乱
+            理论上 cors中间件完全应该作为第一个中间件进行处理
         """
         if not user_middleware:
             return []
@@ -237,16 +243,15 @@ class SimpleStarlette:
 
         return register
 
-
     def run(
         self,
-        host: str = None,
-        port: int = None,
+        host: typing.Optional[str] = None,
+        port: typing.Optional[int] = None,
         debug: bool = False,
         reload: bool = False,
-        workers: int = None,
-        limit_concurrency: int = None,
-        limit_max_requests: int = None,
+        workers: typing.Optional[int] = None,
+        limit_concurrency: typing.Optional[int] = None,
+        limit_max_requests: typing.Optional[int] = None,
         timeout_keep_alive: int = 5,
         **options,
     ):
@@ -270,7 +275,7 @@ class SimpleStarlette:
         options["limit_concurrency"] = limit_concurrency
         options["limit_max_requests"] = limit_max_requests
         options["timeout_keep_alive"] = timeout_keep_alive
-        
+
         options["port"] = port or self.config.get("PORT", 9091)
         options["host"] = host or self.config.get("HOST", "127.0.0.1")
 
@@ -325,7 +330,7 @@ class SimpleStarlette:
     def load_conf_from_file(self, config_path: str) -> None:
         self.config.from_file(config_path)
 
-    def make_config(self, config_path: str = None):
+    def make_config(self, config_path: typing.Optional[str] = None):
         """return config object"""
         default_config = {
             "DEBUG": False,

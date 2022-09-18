@@ -23,13 +23,13 @@ class HookEvent(str, Enum):
 class IResponseHook(metaclass=ABCMeta):
     @abstractmethod
     def __call__(self, response: Response, **kwds: Any) -> Any:
-        Ellipsis
+        ...
 
 
 class IRequestHook(metaclass=ABCMeta):
     @abstractmethod
     def __call__(self, prepare_req: PreparedRequest, **kwds) -> Any:
-        Ellipsis
+        ...
 
 
 class Session(_Session):
@@ -58,6 +58,7 @@ class Session(_Session):
     ):
         request_hooks = []
         if hooks:
+            hooks = typing.cast(typing.Dict, hooks)
             if HookEvent.REQUEST in hooks:
                 request_hooks = hooks.pop(HookEvent.REQUEST)
         req = Request(
@@ -200,6 +201,7 @@ class Requests(RequestsCtx, RequestHookMixin):
         settings.update(self.persist_settions)
         settings.update(kwargs)
         settings.pop("url", 0)
+        url = typing.cast(str, url)
         request_func = functools.partial(
             self.session.request, method, url
         )

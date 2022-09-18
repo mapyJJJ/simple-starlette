@@ -7,6 +7,7 @@ from simple_starlette.args import (BodyParams, QueryParams, ResponseParams,
                                    register_args)
 from simple_starlette.middleware.cors import CorsMiddlewareGenFunc
 from simple_starlette.responses import Response, ResTypeEnum
+from simple_starlette.exceptions import RequestArgsNoMatch
 
 app = SimpleStarlette(
     __name__,
@@ -19,7 +20,7 @@ api_user = Include(app, "/api/user")
 api_admin = Include(app, "/api/admin")
 
 
-@register_args
+@register_args()
 class GetAdminOrUserOneArgs(QueryParams):
     """
     通过 id 或 name 查询admin
@@ -31,7 +32,7 @@ class GetAdminOrUserOneArgs(QueryParams):
     @root_validator
     def validate_all(cls, values):
         if not (values["name"] or values["id_"]):
-            raise Exception("id_ 和 name不能全为空")
+            raise RequestArgsNoMatch("id_ 和 name不能全为空")
         return values
 
 

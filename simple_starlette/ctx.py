@@ -36,16 +36,16 @@ if TYPE_CHECKING:
 
     class GlobalVar:
         def __getattribute__(self, name: str) -> Any:
-            Ellipsis
+            ...
 
         def __setattr__(self, name: str, __value):
-            Ellipsis
+            ...
 
         def __pop__(self, name: str, default=None) -> Any:
-            Ellipsis
+            ...
 
         def get(self, name: str, default=None) -> Any:
-            Ellipsis
+            ...
 
     g = GlobalVar()
 else:

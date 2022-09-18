@@ -1,3 +1,5 @@
+from typing import Optional
+
 from redis import ConnectionPool, Redis
 
 
@@ -10,7 +12,7 @@ class RedisClient:
         self,
         app,
         redis_db_uri: str = "",
-        redis_port: int = None,
+        redis_port: Optional[int] = None,
         db: int = 0,
     ) -> None:
         db_uri = redis_db_uri or app.config.get("REDIS_DB_URI", None)
