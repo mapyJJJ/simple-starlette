@@ -12,6 +12,7 @@ from starlette.routing import WebSocketRoute as _WebSocketRoute
 from starlette.routing import compile_path, get_name, websocket_session
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from simple_starlette.ctx import RequestCtx
 from simple_starlette.middleware.token_auth import TokenAuth
 from simple_starlette.types import Route as _RouteT
 
@@ -27,6 +28,10 @@ except ImportError:
 def request_response(func: typing.Callable) -> ASGIApp:
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
         request = Request(scope, receive=receive, send=send)
+        app = scope["app"]
+        req_ctx = RequestCtx(app, request)
+        req_ctx.set()
+
         content_type = request.headers.get("Content-Type")
         _d = {}
         if request.query_params:

@@ -307,7 +307,7 @@ def split_read_write(clause, _flushing):
     # 读写分离
     # 默认 update onsert  insert 使用 master db
     # query 走 任一 db
-    if bind_name := g.get("__ctx_bind_name"):
+    if bind_name := g.__ctx_bind_name:
         return engines[bind_name].sync_engine
 
     if _flushing or isinstance(clause, (Update, Delete, Insert)):  # type: ignore

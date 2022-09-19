@@ -170,7 +170,7 @@ class TokenAuth:
             session = Session(**auth_payload)
         else:
             session = Session()
-        scope["auth"] = session
+        scope["auth"] = session  # == request.auth
 
         return error_response
 

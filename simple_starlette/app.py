@@ -18,6 +18,7 @@ from starlette.websockets import WebSocket
 
 from simple_starlette.cache.memory_cache import local_g
 from simple_starlette.config import Config, ConfigAttribute
+from simple_starlette.ctx import AppCtx
 from simple_starlette.docs.api import DocsApi
 from simple_starlette.types import Route as _RouteT
 
@@ -372,7 +373,21 @@ class SimpleStarlette:
     ) -> None:
         scope["app"] = self
         starlette_app = self.gen_starlette_app()
+        # middleware_stack 确保 error_handler中间件在最外，以便捕获全局errors
         await starlette_app.middleware_stack(scope, receive, send)
+
+    def context_app(self, raise_ctx_exception: bool = False):
+        """
+        from simple_starlette import SimpleStarlette
+
+        app = SimpleStarlette(__name__)
+
+        with app.context_app():
+            db = sqlalchemy_db_init()
+            db.query(User).filter()....
+        """
+
+        return AppCtx(self, raise_ctx_exception)
 
     def __repr__(self) -> str:
         return "<SimpleStarlette '%s'>" % self.app_name
