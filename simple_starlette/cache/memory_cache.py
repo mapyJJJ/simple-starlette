@@ -72,14 +72,16 @@ class Cache(metaclass=ABCMeta):
             if old_size := self.__size_map[name]:
                 diffsize = v_size - old_size
         else:
-            if self.__current_size + v_size > self.maxsize:
-                raise CacheIsFull("attach max size")
+            if not self.maxsize == -1:
+                if self.__current_size + v_size > self.maxsize:
+                    raise CacheIsFull("attach max size")
         self.cache_storage[name] = value
         self.__size_map[name] = v_size
         self.__current_size += diffsize
 
     def pop(self, name, default=_default_marker):
         # pop item
+        print(f"poppopopstart: {self.cache_storage}")
         try:
             self.cache_storage.pop(name)
         except KeyError:
@@ -88,6 +90,7 @@ class Cache(metaclass=ABCMeta):
             return default
         size = self.__size_map.pop(name)
         self.__current_size -= size
+        print(f"poppopop: {self.cache_storage}")
 
     def check_in(self, name) -> bool:
         return name in self.cache_storage

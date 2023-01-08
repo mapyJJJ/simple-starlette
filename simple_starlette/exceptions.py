@@ -46,6 +46,14 @@ class RequestArgsNoMatch(SimpleException):
         return await common_exception_handle(request, err)
 
 
+class OverLimitError(SimpleException):
+    @staticmethod
+    async def exception_handle(
+        request: Request, err: SimpleException
+    ):
+        return await common_exception_handle(request, err)
+
+
 exception_handlers = typing.cast(
     typing.Dict[
         typing.Union[int, typing.Type[Exception]], typing.Callable
@@ -53,6 +61,7 @@ exception_handlers = typing.cast(
     {
         RequestArgsNoMatch: RequestArgsNoMatch.exception_handle,
         RequestArgsResolvedError: RequestArgsResolvedError.exception_handle,
+        Exception: OverLimitError.exception_handle
     },
 )
 

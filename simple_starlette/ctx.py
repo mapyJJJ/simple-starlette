@@ -48,13 +48,6 @@ class LocalVar:
             _storage = CtxStorage()
         _storage.set(k, v)
         self._localvar.set(_storage)
-        print(
-            "setsetsetset",
-            [
-                f"{x.__repr__()}:{id(x)}"
-                for x in self._localvar.get().get(k)
-            ],
-        )
 
     def pop(self, k: str):
         if _storage := self._localvar.get(None):
