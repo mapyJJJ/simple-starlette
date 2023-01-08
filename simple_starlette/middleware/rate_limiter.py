@@ -31,6 +31,9 @@ class RateLimiterMiddleWare(MiddlewareAbs):
     async def __call__(
         self, scope: Scope, receive: Receive, send: Send
     ) -> Any:
+        if self.options["path"] != scope["path"]:
+            await self.app(scope, receive, send)
+    
         if self.__check_is_overlimit(scope):
             raise self.options["exc_error"](
                 self.options["exc_error_msg"],
