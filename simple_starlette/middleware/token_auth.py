@@ -1,3 +1,6 @@
+# token_auth.py
+# 鉴权中间件
+# ------
 import typing
 
 import jwt
@@ -10,7 +13,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from simple_starlette.responses import JSONResponse
 from simple_starlette.types import Route
 
-from . import middleware_config
+from . import MiddlewareAbs, middleware_config
 
 
 class UnauthorizedException(Exception):
@@ -55,7 +58,7 @@ def register_skip_auth_routes(
     all_skip_auth_paths.update(set(_r.path for _r in routes))
 
 
-class TokenAuth:
+class TokenAuth(MiddlewareAbs):
     def __init__(
         self,
         app: ASGIApp,
@@ -216,15 +219,15 @@ def TokenAuthMiddleWareGenFunc(
     samesite: typing.Literal["lax", "Strict", "None"] = "lax",
     **options,
 ):
+    options["path"] = path
+    options["domain"] = domain
+    options["secure"] = secure
+    options["expires"] = expires
+    options["httponly"] = httponly
+    options["on_error"] = on_error
+    options["samesite"] = samesite
     options["token_name"] = token_name
     options["secret_conf"] = secret_conf
     options["algorithm_conf"] = algorithm_conf
     options["validate_process"] = validate_process
-    options["on_error"] = on_error
-    options["expires"] = expires
-    options["path"] = path
-    options["domain"] = domain
-    options["secure"] = secure
-    options["samesite"] = samesite
-    options["httponly"] = httponly
     return Middleware(TokenAuth, **options)

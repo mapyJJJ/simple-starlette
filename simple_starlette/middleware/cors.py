@@ -1,3 +1,7 @@
+# cors.py
+# 跨域配置中间件
+# ------
+
 import typing
 
 from starlette.middleware import Middleware

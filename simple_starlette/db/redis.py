@@ -1,6 +1,12 @@
+import sys
 from typing import Optional
 
+import redis
 from redis import ConnectionPool, Redis
+
+from ..logger import getLogger
+
+logger = getLogger(__name__)
 
 
 class RedisCommonConfig:
@@ -22,3 +28,12 @@ class RedisClient:
             )
         pool = ConnectionPool(host=db_uri, port=redis_port, db=db)
         self.redis = Redis(connection_pool=pool)
+
+        self.__check_connection()
+
+    def __check_connection(self):
+        try:
+            self.redis.client_info()
+        except redis.exceptions.ConnectionError:
+            logger.error("连接redis失败,检查配置，以及确保服务可被访问")
+            sys.exit(0)

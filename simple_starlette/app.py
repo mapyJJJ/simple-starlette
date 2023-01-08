@@ -3,10 +3,10 @@
 
 import copy
 import inspect
-import logging
 import typing
 import warnings
 from typing import Callable, Dict, List, Literal
+from textwrap import dedent
 
 import uvicorn
 from starlette.applications import Starlette
@@ -23,9 +23,11 @@ from simple_starlette.docs.api import DocsApi
 from simple_starlette.types import Route as _RouteT
 
 from .exceptions import exception_handlers
-from .logger import uvicorn_logger_map
+from .logger import getLogger
 from .route import Route, WebSocketRoute
 from .types import _L_M
+
+logger = getLogger(__name__)
 
 
 class AllowMethodsAttrConverter:
@@ -60,6 +62,21 @@ class SimpleStarlette:
     simple_starlette_app: Starlette
 
     websocket_routes: Dict[str, WebSocketRoute] = {}
+
+    def echo_framework_name(self):
+        print(
+            dedent(
+                """
+   _____ _                 __    _____ __             __     __  __
+  / ___/(_)___ ___  ____  / /__ / ___// /_____ ______/ /__  / /_/ /____
+  \__ \/ / __ `__ \/ __ \/ / _ \\__ \/ __/ __ `/ ___/ / _ \/ __/ __/ _ \\
+ ___/ / / / / / / / /_/ / /  __/__/ / /_/ /_/ / /  / /  __/ /_/ /_/  __/
+/____/_/_/ /_/ /_/ .___/_/\___/____/\__/\__,_/_/  /_/\___/\__/\__/\___/
+                /_/
+                """
+            )
+        )
+        return
 
     def __init__(
         self,
@@ -125,6 +142,9 @@ class SimpleStarlette:
         self.before_request_stack = (
             before_reqeuest_stack if before_reqeuest_stack else []
         )
+
+        # echo framework name ascii name
+        self.echo_framework_name()
 
     def preflight_check_middleware_order(
         self, user_middleware: _L_M = None
@@ -283,17 +303,14 @@ class SimpleStarlette:
         port = self.config["PORT"] = options["port"]
         host = self.config["HOST"] = options["host"]
 
-        logger = uvicorn_logger_map[logging.INFO]
-
         if self.run_env == "dev":
             local_g["routes"] = self.routes
             DocsApi(self)
-            logger("INFO", f"api文档加载")
-            logger(
-                "INFO",
-                f"api文档地址: http://{host}:{port}/docs/index.html",
+            logger.info(f"api文档加载:")
+            logger.info(
+                f"api文档地址: http://{host}:{port}/docs/index.html"
             )
-        logger("INFO", f"运行环境:{self.run_env}")
+        logger.info(f"运行环境:{self.run_env}")
         uvicorn.run(self, **options)
 
     def rquest_hook(self, starlette_app):

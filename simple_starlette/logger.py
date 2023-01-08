@@ -1,19 +1,33 @@
 import logging
+from typing import Optional
 
 import click
-from uvicorn.config import LOGGING_CONFIG
+
+__all__ = ["getLogger"]
 
 
-def change_uvicorn_access_fmt():
-    LOGGING_CONFIG["formatters"]["access"][
-        "fmt"
-    ] = '%(levelprefix)s %(client_addr)s ---> "%(request_line)s" %(status_code)s'
+def getLogger(
+    namespace: str,
+    formatter_str: str = "",
+    level=logging.DEBUG,
+    log_file_path: Optional[str] = None,
+):
+    logger = logging.getLogger(namespace)
+    handler = logging.StreamHandler()
+    file_handle = None
+    if log_file_path:
+        file_handle = logging.FileHandler(log_file_path)
 
-
-uvicorn_logger_map = {
-    logging.INFO: lambda name, message: logging.getLogger(
-        "uvicorn.error"
-    ).warn(f'{click.style(name, fg="green")}:{" "*5}{message}')
-}
-
-change_uvicorn_access_fmt()
+    prefix_formatter_str = click.style(
+        "%(levelname)s:" + " " * 5, "green"
+    )
+    formatter_str = prefix_formatter_str + (
+        formatter_str or "%(message)s"
+    )
+    formatter = logging.Formatter(formatter_str)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    if file_handle:
+        logger.addHandler(file_handle)
+    logger.setLevel(level)
+    return logger
