@@ -1,5 +1,6 @@
 # rate_limit.py
 # ------
+from functools import wraps
 from typing import Any, Callable, Optional, Type
 from starlette.middleware import Middleware
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -9,6 +10,8 @@ from simple_starlette.exceptions import (
     SimpleException,
     OverLimitError,
 )
+from simple_starlette.types import Route as _RouteT
+from simple_starlette.route import Route
 from . import MiddlewareAbs
 
 from ..logger import getLogger
@@ -32,7 +35,7 @@ class RateLimiterMiddleWare(MiddlewareAbs):
         self, scope: Scope, receive: Receive, send: Send
     ) -> Any:
         if self.options["path"] != scope["path"]:
-            await self.app(scope, receive, send)
+            return await self.app(scope, receive, send)
     
         if self.__check_is_overlimit(scope):
             raise self.options["exc_error"](
@@ -64,8 +67,8 @@ class RateLimiterMiddleWare(MiddlewareAbs):
         self.cache_counter.set(rate_key, count + 1)
         return False
 
-
 def RateLimiterMiddlewareGenFunc(
+    route: Optional[_RouteT] = None,
     path: str = "/",
     expires: int = 60,
     limit_count: int = 100,
@@ -87,6 +90,8 @@ def RateLimiterMiddlewareGenFunc(
     assert (
         rate_key or rate_key_factory
     ), "rate_key， rate_key_factory不能都为空"
+    if route:
+        path = route.path
     options["path"] = path
     options["exc_error"] = exc_error
     options["exc_error_msg"] = exc_error_msg
