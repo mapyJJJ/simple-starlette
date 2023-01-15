@@ -2,19 +2,18 @@
 # ------
 import threading
 from typing import Any, Callable, Optional, Type, TypeVar, cast
+
 from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.types import ASGIApp, Receive, Scope, Send
+
 from simple_starlette.cache.memory_cache import _TTLCache
 from simple_starlette.db.redis import RedisClient
-from simple_starlette.exceptions import (
-    SimpleException,
-    OverLimitError,
-)
+from simple_starlette.exceptions import OverLimitError, SimpleException
 from simple_starlette.types import Route as _RouteT
-from . import MiddlewareAbs
 
 from ..logger import getLogger
+from . import MiddlewareAbs
 
 logger = getLogger(__name__)
 

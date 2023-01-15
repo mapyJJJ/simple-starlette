@@ -1,16 +1,14 @@
 #   app.py
 # ~~~~~~~~~~~
 
-import copy
 import inspect
 import typing
 import warnings
-from typing import Callable, Dict, List, Literal
 from textwrap import dedent
+from typing import Callable, Dict, List, Literal
 
 import uvicorn
 from starlette.applications import Starlette
-from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.types import Receive, Scope, Send
@@ -24,9 +22,9 @@ from simple_starlette.types import Route as _RouteT
 
 from .exceptions import exception_handlers
 from .logger import getLogger
+from .middleware.rate_limiter import RateLimiterMiddleWare
 from .route import Route, WebSocketRoute
 from .types import _L_M
-from .middleware.rate_limiter import RateLimiterMiddleWare
 
 logger = getLogger(__name__)
 
