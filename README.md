@@ -22,7 +22,7 @@
   - [x] 中间件支持，asgi 协议下，一个对象只要能够接收(Scope, Send, Receive)这三个参数，并且在处理完自身逻辑后继续调用下一个中间件，继续传递这三个参数，直到最后被视图函数接收，例如ExceptionMiddleware，处于最外层，用于捕获全局抛出的任何错误
     - [x] cors 跨域设置中间件
     - [x] token_auth 标准 jwt 鉴权中间件
-    - [ ] api rate limiter
+    - [x] api rate limiter
     - [x] 还有很多中间件用于搭配第三方工具日志收集，指标收集，链路追踪等等，都可以去它们各自的 sdk 中找到现成的基于 asgi 的中间件代码
     - [ ] ....
   - [x] 支持 ws 长连接接口的定义
