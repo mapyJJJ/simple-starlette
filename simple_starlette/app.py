@@ -26,6 +26,7 @@ from .exceptions import exception_handlers
 from .logger import getLogger
 from .route import Route, WebSocketRoute
 from .types import _L_M
+from .middleware.rate_limiter import RateLimiterMiddleWare
 
 logger = getLogger(__name__)
 
@@ -130,9 +131,7 @@ class SimpleStarlette:
         ]
 
         self.config = self.make_config(config_path)
-        self.middleware = self.preflight_check_middleware_order(
-            user_middleware=middleware
-        )
+        self.middleware = middleware or []
 
         # convert request hook to middleware
         self.after_request_stack = (
@@ -156,19 +155,16 @@ class SimpleStarlette:
         """
         if not user_middleware:
             return []
-        middleware_priority = {CORSMiddleware: "0"}
-        copy_user_middleware = copy.copy(user_middleware)
-        for _middleware in user_middleware:
-            if specifity_index_str := middleware_priority.get(
-                _middleware.cls
-            ):
-                copy_user_middleware.insert(
-                    int(specifity_index_str),
-                    copy_user_middleware.pop(
-                        copy_user_middleware.index(_middleware)
-                    ),
-                )
-        return copy_user_middleware
+        middleware_priority = {
+            CORSMiddleware: "0",
+            RateLimiterMiddleWare: "1",
+        }
+        user_middleware.sort(
+            key=lambda x: middleware_priority.get(x.cls, 9999)
+        )
+        for _m in user_middleware:
+            logger.info("已加载中间件: %s" % (_m.cls.__name__))
+        return user_middleware
 
     def route(
         self,
@@ -336,7 +332,9 @@ class SimpleStarlette:
             return starlette_app
 
         starlette_app = Starlette(
-            middleware=self.middleware,
+            middleware=self.preflight_check_middleware_order(
+                user_middleware=self.middleware
+            ),
             exception_handlers=exception_handlers,
             debug=self.config.get("DEBUG", False),
             routes=list([r for r in self.iter_all_routes()]),
