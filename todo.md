@@ -1,0 +1,45 @@
+- **框架基础功能**:
+  - fbv, cbv
+  - 类型支持
+  - 参数自动注入
+  - Include 分组
+  - after/before request hook
+  - httpclient: http客户端用于对接第三方平台
+  - 使用uvicorn启动服务
+  - `g` ,  `request` , `current_app` , `app.context_app`
+  - 在线文档，自研文档项目 `simple-api-doc`
+    - `simple-api-doc`: 完成分组展示，单个接口详情展示，用户注释 , 请求参数展示, 正常响应参数展示
+    - `simple-api-doc`: 在线模拟 http 请求(cookie，参数设定，真实响应展示)
+    - `simple-api-doc`: 主动捕获接口中用户定义的错误码，自动生成展示
+    - 自动生成js http client端调用代码（v-axios,fetch,ajax）
+  - **其他协议支持**
+    - websocket 长连接服务
+    - jsonrpc
+  - **数据库**：
+    - aio-sqlalchemy: 主从配置，读写分离, 会话管理
+    - redis client
+
+- **多级分流系统**
+  - 缓存:
+    - 集中式缓冲: `redis`
+    - 二级缓存 : `guava cache` , `lru ttl cache`
+  - 分流:
+    - 负载均衡：`lvs`, `haproxy`, `nginx`
+
+- **安全保障系统**
+  - 跨域，配合浏览器同源策略：cors middleware
+  - 用户凭证：session-cookie, Token
+
+- **分布式配合**
+  - 服务流量治理：
+    - 流量控制：api rate limiter 分布式限频模块
+    - 服务容错：重试熔断，故障转移，服务降级
+  - 服务可视化：
+    - 错误收集：错误日志上传第三方平台，如：sentry
+    - 聚合指标, 监控预警：prometheus采集服务数据，整合指标，预设告警，可用通过grafana展示基础大盘
+    - 链路追踪: zipkin
+
+- **服务部署**
+  - 单体服务：Supervisor
+  - 多容器服务部署：docker-compose
+  - 集群部署
