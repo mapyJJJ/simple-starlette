@@ -98,7 +98,7 @@ def row_obj_to_dict(
     obj,
     exclude_fields: List[str] = ["_sa_instance_state"],
     convert_func: List[Callable] = [],
-    datetime_to_str_fmt: str = "%Y-%m-%d %H:%M:%D"
+    datetime_to_str_fmt: str = "%Y-%m-%d %H:%M:%S"
 ):
     """orm 对象转为 dict
 
