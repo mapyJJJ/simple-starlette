@@ -8,11 +8,11 @@ find_file_path = (
 )
 
 requires = (
-    open(find_file_path(os.path.join(os.getcwd(),"dev_requirements.txt")), "r")
+    open(find_file_path("dev_requirements.txt"), "r")
     .read()
     .split("/n")
 )
-with open(find_file_path(os.path.join(os.getcwd(), "README.md")), "r", encoding="utf-8") as fh:
+with open(find_file_path("README.md"), "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 
