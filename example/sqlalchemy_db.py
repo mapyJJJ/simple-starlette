@@ -15,7 +15,7 @@ from simple_starlette.db.db_sqlalchemy import (BaseModelDict, Sqlalchemy,
                                                column_field, register_db_model)
 
 app = SimpleStarlette(__name__)
-app.config["DB_URIS"] = {"master": "mysql+aiomysql://test:123456@localhost/test?charset=utf8mb4"}
+app.config["DB_URIS"] = {"master": "mysql+asyncmy://test:123456@localhost/test?charset=utf8mb4"}
 
 db = Sqlalchemy(app) # 初始化db
 
