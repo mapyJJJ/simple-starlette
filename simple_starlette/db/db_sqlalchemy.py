@@ -98,6 +98,7 @@ def row_obj_to_dict(
     obj,
     exclude_fields: List[str] = ["_sa_instance_state"],
     convert_func: List[Callable] = [],
+    datetime_to_str_fmt: str = "%Y-%m-%d %H:%M:%D"
 ):
     """orm 对象转为 dict
 
@@ -122,6 +123,9 @@ def row_obj_to_dict(
             obj_dict.pop(k)
     for _conver_f in convert_func:
         obj_dict = _conver_f(obj_dict)
+    for column in obj_dict:
+        if isinstance(obj_dict[column], datetime):
+            obj_dict[column] = cast(datetime, obj_dict[column]).strftime(datetime_to_str_fmt)
     return obj_dict
 
 
