@@ -198,7 +198,7 @@ from simple_starlette import (
 app = SimpleStarlette(__name__)
 app.config[
     "SQLALCHEMY_DATABASE_URI"
-] = "mysql+aiomysql://root:password@localhost/database_name?charset=utf8mb4"
+] = "mysql+asyncmy://root:password@localhost/database_name?charset=utf8mb4"
 
 db = Sqlalchemy(app)
 

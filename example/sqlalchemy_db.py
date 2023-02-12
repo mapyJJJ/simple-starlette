@@ -15,9 +15,15 @@ from simple_starlette.db.db_sqlalchemy import (BaseModelDict, Sqlalchemy,
                                                column_field, register_db_model)
 
 app = SimpleStarlette(__name__)
+
+# NOTICE 提供配置
 app.config["DB_URIS"] = {"master": "mysql+asyncmy://test:123456@localhost/test?charset=utf8mb4"}
 
-db = Sqlalchemy(app) # 初始化db
+db = Sqlalchemy(app) # NOTICE 初始化db
+@app.after_request
+async def _do_after_request(request, response):
+    await db.session.close() # NOTICE 请求结束后需要放回到线程池中
+    return response
 
 # ------映射三张表 Person, Person1, Person2---------
 @register_db_model  # 注册model
