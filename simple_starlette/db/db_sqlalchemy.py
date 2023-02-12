@@ -8,7 +8,7 @@ import logging
 import random
 import re
 from datetime import datetime
-from typing import (TYPE_CHECKING, Any, Callable, Dict, Generic, List, Text,
+from typing import (TYPE_CHECKING, Any, Callable, Dict, Generic, List,
                     Type, TypeVar, Union, cast, overload)
 
 from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
@@ -21,7 +21,7 @@ from sqlalchemy.sql.dml import Delete, Insert, Update
 from sqlalchemy.sql.schema import Column
 from sqlalchemy.sql.sqltypes import (BIGINT, DECIMAL, NUMERIC, BigInteger,
                                      Boolean, Date, DateTime, Float, Integer,
-                                     String, Time)
+                                     String, Time, Text)
 
 from simple_starlette.ctx import g
 
