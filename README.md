@@ -94,7 +94,7 @@ if __name__ == "__main__":
     - `type hint`
 
 ---
-各类系统架构template [](https://github.com/mapyJJJ/simple-starlette/blob/master/system_architecture_template/README.md)
+各类系统架构template [README](https://github.com/mapyJJJ/simple-starlette/blob/master/system_architecture_template/README.md)
 
 
 ---
