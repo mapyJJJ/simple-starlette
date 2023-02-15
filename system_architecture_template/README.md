@@ -1,0 +1,4 @@
+- 消息推送系统:
+    - 站点内部web推送场景:
+        - SSE:Sever-Send-Event
+        - WEBSOCKET
