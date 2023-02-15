@@ -8,27 +8,69 @@ import logging
 import random
 import re
 from datetime import datetime
-from typing import (TYPE_CHECKING, Any, Callable, Dict, Generic, List,
-                    Type, TypeVar, Union, cast, overload)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
-from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine
-from sqlalchemy.ext.asyncio.session import AsyncSession as _AsyncSession
+from sqlalchemy import delete, update, insert, delete
+from sqlalchemy.ext.asyncio import (
+    async_scoped_session,
+    create_async_engine,
+)
+from sqlalchemy.ext.asyncio.session import (
+    AsyncSession as _AsyncSession,
+)
+from sqlalchemy.sql.elements import Label
+from sqlalchemy.sql.functions import count
+from sqlalchemy.sql.schema import Index
 from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.orm.decl_api import registry
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.dml import Delete, Insert, Update
 from sqlalchemy.sql.schema import Column
-from sqlalchemy.sql.sqltypes import (BIGINT, DECIMAL, NUMERIC, BigInteger,
-                                     Boolean, Date, DateTime, Float, Integer,
-                                     String, Time, Text)
+from sqlalchemy.sql.sqltypes import (
+    BIGINT,
+    DECIMAL,
+    NUMERIC,
+    BigInteger,
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Time,
+    Text,
+)
 
 from simple_starlette.ctx import g
+from .sqlalchemy_types import Select
+from sqlalchemy import select
 
 logger = logging.getLogger("sqlalchemy_db")
 
 D = TypeVar("D")
 C = TypeVar("C")
+
+select = cast(Type[Select], select)
+update = update
+insert = insert
+delete = delete
+Label = Label
+count = count
+Index = Index
+
 
 
 def check_cls_need_tablename(cls):
@@ -98,7 +140,7 @@ def row_obj_to_dict(
     obj,
     exclude_fields: List[str] = ["_sa_instance_state"],
     convert_func: List[Callable] = [],
-    datetime_to_str_fmt: str = "%Y-%m-%d %H:%M:%S"
+    datetime_to_str_fmt: str = "%Y-%m-%d %H:%M:%S",
 ):
     """orm 对象转为 dict
 
@@ -125,7 +167,9 @@ def row_obj_to_dict(
         obj_dict = _conver_f(obj_dict)
     for column in obj_dict:
         if isinstance(obj_dict[column], datetime):
-            obj_dict[column] = cast(datetime, obj_dict[column]).strftime(datetime_to_str_fmt)
+            obj_dict[column] = cast(
+                datetime, obj_dict[column]
+            ).strftime(datetime_to_str_fmt)
     return obj_dict
 
 
@@ -217,7 +261,7 @@ def column_field(
 @overload
 def column_field(
     column_type: Union[Type[Boolean], Boolean],
-    primary_key: bool,
+    primary_key: bool = False,
     default=None,
     nullable=None,
     comment=None,
