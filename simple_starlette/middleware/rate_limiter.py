@@ -35,7 +35,6 @@ class RateLimiterMiddleWare(MiddlewareAbs):
             self._lock = self.redis_client.redis.lock(
                 "rate_limit_lock_%s" % id(self),
                 timeout=10,
-                blocking=True,
                 blocking_timeout=5,
             )
         else:

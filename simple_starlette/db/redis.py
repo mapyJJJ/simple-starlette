@@ -28,12 +28,13 @@ class RedisClient:
             )
         pool = ConnectionPool(host=db_uri, port=redis_port, db=db)
         self.redis = Redis(connection_pool=pool)
+        self.redis.info()
 
         self.__check_connection()
 
     def __check_connection(self):
         try:
-            self.redis.client_info()
+            self.redis.info()
         except redis.exceptions.ConnectionError:
             logger.error("连接redis失败,检查配置，以及确保服务可被访问")
             sys.exit(0)

@@ -2,7 +2,7 @@
 # ~~~~~~~~
 
 from abc import ABCMeta
-from typing import Dict, Optional, Union, cast
+from typing import Dict, Optional, Union, cast, Union, Callable, overload
 
 import pydantic
 
@@ -28,7 +28,16 @@ class ResponseParams(BaseModel, metaclass=ABCMeta):
 request_args_model_map: Dict[str, Union[QueryParams, BodyParams]] = {}
 
 
-def register_args(cls: Optional[ArgsT] = None) -> ArgsT:
+
+@overload
+def register_args(cls: ArgsT) -> ArgsT:
+    ...
+
+@overload
+def register_args() -> Callable:
+    ...
+    
+def register_args(cls: Optional[ArgsT] = None) -> Union[Callable, ArgsT]:    
     if not cls:
         return lambda cls: register_args(cls)  # type: ignore
 

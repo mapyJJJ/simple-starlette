@@ -1,9 +1,8 @@
 import pytest
 
 def test_allow_methods(app):
-    assert app.allow_default_methods == ["get", "post"]
-
-    with pytest.raises(TypeError):
+    assert app.allow_default_methods == ["get","post","put","delete","patch","options"]
+    with pytest.raises(TypeError) as e:
         app.allow_default_methods = ["error", 1]
 
 def test_app_conf(app):

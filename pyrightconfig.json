@@ -3,9 +3,6 @@
         "simple_starlette",
         "example.py"
     ],
-    "ignore": [
-        "stubs"
-    ],
     "stubPath": "stubs",
-    "reportMissingModuleSource": "none",
+    "reportInvalidStringEscapeSequence": "none"
 }

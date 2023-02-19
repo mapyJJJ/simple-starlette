@@ -1,6 +1,5 @@
-import asyncio
-from simple_starlette import SimpleStarlette, g
 import pytest
+from simple_starlette import SimpleStarlette, g
 
 @pytest.fixture
 def app():
