@@ -3,6 +3,7 @@
 
 import inspect
 import typing
+from typing import NewType, cast
 
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
@@ -24,9 +25,13 @@ try:
 except ImportError:
     contextvars = None  # type: ignore
 
+_ASGIAPP = NewType("_ASGIAPP", ASGIApp)
+_Receive = NewType("_Receive", Receive)
+_Send = NewType("_Send", Send)
+_Scope = NewType("_Scope", Scope)
 
-def request_response(func: typing.Callable) -> ASGIApp:
-    async def app(scope: Scope, receive: Receive, send: Send) -> None:
+def request_response(func: typing.Callable) -> _ASGIAPP:
+    async def app(scope: _Scope, receive: _Receive, send: _Send) -> None:
         request = Request(scope, receive=receive, send=send)
         app = scope["app"]
         req_ctx = RequestCtx(app, request)
@@ -69,7 +74,7 @@ def request_response(func: typing.Callable) -> ASGIApp:
 
         await response(scope, receive, send)
 
-    return app
+    return cast(_ASGIAPP, app)
 
 
 class Route(_Route):
@@ -112,7 +117,7 @@ class Route(_Route):
         ) = compile_path(path)
 
     async def handle(
-        self, scope: Scope, receive: Receive, send: Send
+        self, scope: _Scope, receive: _Receive, send: _Send
     ) -> None:
         if self.methods and scope["method"] not in self.methods:
             if "app" in scope:

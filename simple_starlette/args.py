@@ -2,7 +2,7 @@
 # ~~~~~~~~
 
 from abc import ABCMeta
-from typing import Dict, Optional, Union, cast, Union, Callable, overload
+from typing import Callable, Dict, Optional, Union, cast, overload
 
 import pydantic
 

@@ -2,6 +2,7 @@
 # 鉴权中间件
 # ------
 import typing
+from typing import NewType
 
 import jwt
 from jwt.exceptions import PyJWTError
@@ -15,6 +16,10 @@ from simple_starlette.types import Route
 
 from . import MiddlewareAbs, middleware_config
 
+_ASGIAPP = NewType("_ASGIAPP", ASGIApp)
+_Receive = NewType("_Receive", Receive)
+_Send = NewType("_Send", Send)
+_Scope = NewType("_Scope", Scope)
 
 class UnauthorizedException(Exception):
     def __init__(
@@ -61,7 +66,7 @@ def register_skip_auth_routes(
 class TokenAuth(MiddlewareAbs):
     def __init__(
         self,
-        app: ASGIApp,
+        app: _ASGIAPP,
         token_name: str = "token",
         secret_conf: str = "secret",
         algorithm_conf: str = "HS256",
@@ -137,7 +142,7 @@ class TokenAuth(MiddlewareAbs):
         return None
 
     async def open_session(
-        self, scope: Scope, receive: Receive, send: Send
+        self, scope: _Scope, receive: _Receive, send: _Send
     ):
         error_response = None
         auth_payload = {}
@@ -178,7 +183,7 @@ class TokenAuth(MiddlewareAbs):
         return error_response
 
     async def __call__(
-        self, scope: Scope, receive: Receive, send: Send
+        self, scope: _Scope, receive: _Receive, send: _Send
     ) -> None:
         if scope["type"] not in ["http", "websocket"]:
             await self.app(scope, receive, send)

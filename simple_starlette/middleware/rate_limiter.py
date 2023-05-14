@@ -1,7 +1,7 @@
 # rate_limit.py
 # ------
 import threading
-from typing import Any, Callable, Optional, Type, TypeVar, cast
+from typing import Any, Callable, NewType, Optional, Type, TypeVar, cast
 
 from starlette.middleware import Middleware
 from starlette.requests import Request
@@ -17,9 +17,14 @@ from . import MiddlewareAbs
 
 logger = getLogger(__name__)
 
+_ASGIAPP = NewType("_ASGIAPP", ASGIApp)
+_Receive = NewType("_Receive", Receive)
+_Send = NewType("_Send", Send)
+_Scope = NewType("_Scope", Scope)
+
 
 class RateLimiterMiddleWare(MiddlewareAbs):
-    def __init__(self, app: ASGIApp, **options) -> None:
+    def __init__(self, app: _ASGIAPP, **options) -> None:
         self.app = app
         self.options = options
         self.cache_counter = _TTLCache(
@@ -43,7 +48,7 @@ class RateLimiterMiddleWare(MiddlewareAbs):
         super().__init__(app, **options)
 
     async def __call__(
-        self, scope: Scope, receive: Receive, send: Send
+        self, scope: _Scope, receive: _Receive, send: _Send
     ) -> Any:
         # rate_key count
         rate_key = self.options["rate_key"] or self.options.get(

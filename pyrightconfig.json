@@ -4,5 +4,6 @@
         "example.py"
     ],
     "stubPath": "stubs",
-    "reportInvalidStringEscapeSequence": "none"
+    "reportInvalidStringEscapeSequence": "none",
+    "reportMissingModuleSource": "none"
 }

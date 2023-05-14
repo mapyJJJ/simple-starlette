@@ -5,13 +5,13 @@ import inspect
 import typing
 import warnings
 from textwrap import dedent
-from typing import Callable, Dict, List, Literal
+from typing import Callable, Dict, List, Literal, NewType, cast
 
 import uvicorn
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.types import Receive, Scope, Send
+from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.websockets import WebSocket
 
 from simple_starlette.cache.memory_cache import local_g
@@ -27,7 +27,10 @@ from .route import Route, WebSocketRoute
 from .types import _L_M
 
 logger = getLogger(__name__)
-
+_ASGIAPP = NewType("_ASGIAPP", ASGIApp)
+_Receive = NewType("_Receive", Receive)
+_Send = NewType("_Send", Send)
+_Scope = NewType("_Scope", Scope)
 
 class AllowMethodsAttrConverter:
     @staticmethod
@@ -305,7 +308,7 @@ class SimpleStarlette:
                 f"api文档地址: http://{host}:{port}/docs/index.html"
             )
         logger.info(f"运行环境:{self.run_env}")
-        uvicorn.run(self, **options)
+        uvicorn.run(cast(_ASGIAPP, self), **options)
 
     def rquest_hook(self, starlette_app):
         """use starlette http middleware"""
@@ -382,7 +385,7 @@ class SimpleStarlette:
             yield r
 
     async def __call__(
-        self, scope: Scope, receive: Receive, send: Send
+        self, scope: _Scope, receive: _Receive, send: _Send
     ) -> None:
         scope["app"] = self
         starlette_app = self.gen_starlette_app()
