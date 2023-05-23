@@ -59,45 +59,6 @@ if __name__ == "__main__":
 查看更多开发使用实例：[example usage](https://github.com/mapyJJJ/simple-starlette/tree/master/example)
 
 ---
-#### basic:
-
-- apis支持: 
-    - `cbv/fbv http api`
-    - `json-rpc`
-    - `tcp-rpc`
-    - `grpc-rpc`
-    - `websocket`
-
-- middleware:
-    - `cors`
-    - `auth jwt+cookie`
-    - `api-rate-limit`
-    - `sentry`
-    - ...(compatible all asgi middleware)
-
-- database:
-    - relational database: `mysql + sqlalchemy`, `postgresql + sqlalchemy`
-    - not noly sql database: `redis`, `mongodb`   
-
-- cache:
-    - ttl: `ttlcache`, `lruttlcache`
-    - guava_cache: `GuavaCache`
-    - redis-cache
-
-- async task(定时，延时执行): 
-    - `simple-async-task`: 
-    - `celery` : 一般架构为(celery+rabbitmq)
-
-- other: 
-    - `simple-api-docs`
-    - `polish query/body params`
-    - `type hint`
-
----
-各类系统架构template [README](https://github.com/mapyJJJ/simple-starlette/blob/master/system_architecture_template/README.md)
-
-
----
 #### LICENSE
 
 [GPL-3.0 License](https://github.com/mapyJJJ/simple-starlette/blob/master/LICENSE)
