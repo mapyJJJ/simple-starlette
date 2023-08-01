@@ -62,8 +62,6 @@ class LocalVar:
         )
 
     def get(self, name) -> Any:
-        if name == "app":
-            print("hereherehere")
         return getattr(self._localvar.get(None), name, [None])[-1]
 
 
@@ -92,6 +90,7 @@ class AppCtx:
     def set(self):
         app_ctx_var.set("app", self.app)
         app_ctx_var.set("app.g", self.g)
+        app_ctx_var.set("app.db.sessions", [])
 
     def pop(self):
         app_ctx_var.pop("app")
@@ -157,6 +156,8 @@ request_ctx_var = LocalVar()
 
 current_app = LocalProxy(partial(app_ctx_var.get, "app"))
 g = cast(Any, LocalProxy(partial(app_ctx_var.get, "app.g")))
+db_sessions = cast(Any, LocalProxy(partial(app_ctx_var.get, "app.db.sessions")))
+
 request = cast(
     Request, LocalProxy(partial(request_ctx_var.get, "request"))
 )

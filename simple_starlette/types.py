@@ -15,6 +15,7 @@ SimpleApp = typing.Callable[
 _L_M: TypeAlias = typing.Optional[typing.List[Middleware]]
 
 
+@typing.type_check_only
 class Route:
     path: str
     endpoint: typing.Callable
