@@ -95,7 +95,6 @@ class AppCtx:
     def pop(self):
         app_ctx_var.pop("app")
         app_ctx_var.pop("app.g")
-        app_ctx_var.pop("app.db.sessions")
 
     async def __aenter__(self):
         self.set()
@@ -106,9 +105,6 @@ class AppCtx:
         value: Exception,
         tb: TracebackType,
     ):
-        for _session in db_sessions:
-            if _session:
-                _session.close()
         self.pop()
         if value:
             if value.__traceback__ is not tb:
