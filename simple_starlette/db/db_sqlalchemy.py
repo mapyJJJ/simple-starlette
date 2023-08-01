@@ -26,7 +26,7 @@ from sqlalchemy.sql.sqltypes import (BIGINT, DECIMAL, NUMERIC, BigInteger,
                                      Boolean, Date, DateTime, Float, Integer,
                                      String, Text, Time)
 
-from simple_starlette.ctx import g, db_sessions
+from simple_starlette.ctx import g
 
 from .sqlalchemy_types import Select
 
@@ -89,6 +89,7 @@ class ModelNameMixin(object):
             cls.__tablename__ = cls.__name__.lower()  # type: ignore
         super(ModelNameMixin, cls).__init__(*args, **kwargs)
 
+
 class BaseModelMeta(ModelNameMixin, DeclarativeMeta):
     ...
 
@@ -101,6 +102,7 @@ class BaseModelDict(dict):
     __table_args__ = ()
 
     if TYPE_CHECKING:
+
         @classmethod
         def create_row(cls, **kwargs):
             return cls(**kwargs)
@@ -282,8 +284,12 @@ class Never:
 R = TypeVar("R")
 
 if TYPE_CHECKING:
-    def register_db_model(cls: R) -> R: ...
+
+    def register_db_model(cls: R) -> R:
+        ...
+
 else:
+
     def register_db_model(cls: R) -> R:
         def register_orm_model(orm_column_map):
             orm_column_map["create_row"] = classmethod(
@@ -321,7 +327,7 @@ def split_read_write(clause, _flushing):
     # 读写分离
     # 默认 update onsert  insert 使用 master db
     # query 走 任一 db
-    if bind_name := g.__ctx_bind_dbengine_name:
+    if bind_name := g.__ctx_bind_name:
         return engines[bind_name].sync_engine
 
     if _flushing or isinstance(clause, (Update, Delete, Insert)):  # type: ignore
@@ -361,58 +367,57 @@ class Sqlalchemy:
     """
     init sqlalchemy
     """
+
+    # ---config----
     MAIN_URI_NAME = "master"
+
     # 连接池大小（在连接池中保持打开的连接数），设置为 0，代表禁用连接池
     DB_POOL_SIZE: int = 30
+
     # 池在经过给定秒数后回收连接，默认为 -1 ，没有超时，，
     DB_POOL_RECYCLE: int = -1
+
     DB_POOL_MAX_OVERFLOW: int = 0
-    EXPIRE_ON_COMMIT = True
+
     # 设置数据库连接，最少必须设置  master
     DB_URIS: Dict[str, str] = {"master": "sqlite:///memory:"}
+    # -----------
 
+    # session instance
     _session = None
+
     # 读写分离插件
     split_read_write_ext = split_read_write
+
     # ping sql
     _ping_sql = "select 1"
+
+    class RoutingSession(Session):
+        def get_bind(self, mapper=None, clause=None, **kw):
+            if Sqlalchemy.split_read_write_ext:
+                return Sqlalchemy.split_read_write_ext(clause, self._flushing)  # type: ignore
 
     def __init__(self, app, **kwargs) -> None:
         """
         app -- simple-starlette app 实例
         async_io -- 使用异步io操作数据库
         """
-        self.asgi_app = app
-        self.config_options = self.make_configs(self.asgi_app, kwargs)
-        self.check_conf(self.config_options)
-        self.create_engine_func = create_async_engine
-        self.register_engine(self.create_engine(self.config_options))
-        self.register_req_hook()
-        self.db_session_maker = self.gen_session_maker()
+        config_options = self.make_configs(app, kwargs)
 
-    def gen_session_maker(self) -> sessionmaker:
-        class RoutingSession(Session):
-            def get_bind(self, mapper=None, clause=None, **kw):
-                if Sqlalchemy.split_read_write_ext:
-                    return Sqlalchemy.split_read_write_ext(clause, self._flushing)  # type: ignore
-        db_session_maker = sessionmaker(
+        self.check_conf(config_options)
+
+        self.create_engine_func = create_async_engine
+
+        engines.update(self.create_engine(config_options))
+
+        self.db_session_maker = sessionmaker(
             class_=AsyncSession,
-            sync_session_class=RoutingSession,
-            expire_on_commit=self.asgi_app.config.get("EXPIRE_ON_COMMIT") or self.EXPIRE_ON_COMMIT,
+            sync_session_class=self.RoutingSession,
+            expire_on_commit=False,
             future=True,
         )
-        return db_session_maker
 
-    def register_engine(self, engine_map: dict):
-        engines.update(engine_map)
-
-    def register_req_hook(self):
-        # after request , close all session
-        @self.asgi_app.after_request
-        async def _do_after_request(*args):
-            for _session in db_sessions:
-                if _session and hasattr(_session, "close"):
-                    _session.close()
+        self.session_factory_map = {}
 
     def check_conf(self, conf):
         uri_dict = conf["db_uris"]
@@ -456,13 +461,14 @@ class Sqlalchemy:
     def gen_scopefunc():
         def scopefunc():
             from asyncio import current_task
+
             try:
                 return f"{current_task()}"
             except RuntimeError:
                 return "__main_loop__"
             except Exception as e:
-                logger.error(f"db get scope error: {e}", )
                 raise e
+
         return scopefunc
 
     def set_ctx_db(self, name: str):
@@ -476,25 +482,23 @@ class Sqlalchemy:
             raise ValueError(
                 f"db_name {name} not found, please check `db_uri` config"
             )
-        g.__ctx_bind_dbengine_name = name
+        g.__ctx_bind_name = name
 
     @property
     def session(self) -> AsyncSession:
-        if not self._session:
-            _session = async_scoped_session(
-                self.db_session_maker, scopefunc=self.gen_scopefunc()
-            )
-            self._session = _session
-        session = self._session()
-        db_sessions.append(session)
-        return session
+        if self._session:
+            return self._session()
+        _session = async_scoped_session(
+            self.db_session_maker, scopefunc=self.gen_scopefunc()
+        )
+        self._session = _session
+        return self._session()
 
     @property
     def engines_iter(self):
         for _engine in engines.values():
             yield _engine
 
-    # create all table
     async def create_all(self):
         async with engines["master"].begin() as conn:
             await conn.run_sync(_Base.metadata.create_all)

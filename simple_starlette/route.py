@@ -15,6 +15,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from simple_starlette.ctx import RequestCtx
 from simple_starlette.middleware.token_auth import TokenAuth
+from simple_starlette.types import Route as _RouteT
 
 from .dispatch_request import dispatch_request
 from .exceptions import RequestArgsResolvedError
@@ -106,6 +107,9 @@ class Route(_Route):
         self.include_name = include_name
 
         self.methods = [method.upper() for method in methods]
+        # if "GET" in self.methods:
+        #     self.methods.append("HEAD")
+
         (
             self.path_regex,
             self.path_format,
