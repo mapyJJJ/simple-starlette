@@ -381,6 +381,7 @@ class Sqlalchemy:
 
     # 设置数据库连接，最少必须设置  master
     DB_URIS: Dict[str, str] = {"master": "sqlite:///memory:"}
+
     # -----------
 
     # session instance
@@ -486,12 +487,10 @@ class Sqlalchemy:
 
     @property
     def session(self) -> AsyncSession:
-        if self._session:
-            return self._session()
-        _session = async_scoped_session(
-            self.db_session_maker, scopefunc=self.gen_scopefunc()
-        )
-        self._session = _session
+        if not self._session:
+            self._session = async_scoped_session(
+                self.db_session_maker, scopefunc=self.gen_scopefunc()
+            )
         return self._session()
 
     @property
