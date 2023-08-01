@@ -144,7 +144,7 @@ R = TypeVar("R", bound=_RouteT)
 
 def rate_limit(
     app,
-    route: R = None,
+    route: Optional[R] = None,
     interval_time: int = 60,
     limit_count: int = 100,
     lock_expires: int = 10,
@@ -154,7 +154,7 @@ def rate_limit(
     exc_error: Optional[Type[SimpleException]] = OverLimitError,
     exc_error_msg: str = "api请求数到达限制",
     exc_error_code: int = 406,
-) -> R:  # type: ignore
+) -> R:
     options = {}
     assert (
         rate_key or rate_key_factory
@@ -177,6 +177,7 @@ def rate_limit(
     app.middleware.append(
         Middleware(RateLimiterMiddleWare, **options)
     )
+    return route
 
 
 def RateLimiterMiddlewareGenFunc(
