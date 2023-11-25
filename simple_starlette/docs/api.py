@@ -1,6 +1,7 @@
 import functools
 import inspect
 import re
+import os.path
 from collections import defaultdict
 from dataclasses import MISSING, dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -216,10 +217,11 @@ class DocsApi:
         _register_api(
             target_func=self.api_list, allow_methods=["GET"]
         )
+        directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "react_static")
         app.routes["/"] = Mount(
             "/docs",
             app=StaticFiles(
-                directory="simple_starlette/docs/react_static"
+                directory=directory
             ),
             name="docs",
         )
