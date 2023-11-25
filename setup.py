@@ -1,7 +1,7 @@
 import os
-from setuptools import find_packages, setup
+from setuptools import find_namespace_packages, setup
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 
 find_file_path = (
     lambda file_name: os.path.split(__file__)[0] + "/" + file_name
@@ -22,7 +22,8 @@ setup(
     author="asbt",
     version=__version__,
     name="simple_starlette",
-    packages=find_packages(),
+    packages=find_namespace_packages(),
+    include_package_data=True,
     install_requires=requires,
     description="a micro server",
     author_email="sg5htd@gmail.com",

@@ -1,0 +1,3 @@
+include simple_starlette/docs/react_static/**
+include simple_starlette/docs/react_static/static/css/**
+include simple_starlette/docs/react_static/static/js/**
